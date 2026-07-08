@@ -300,16 +300,55 @@ footer{
 footer .dot{color:var(--rouge)}
 
 @media(max-width:820px){
-  header{padding:1.1rem 1.4rem}
-  nav{gap:1.1rem}
-  nav button{font-size:.6rem;letter-spacing:.15em}
-  main{padding:2rem 1.4rem 4rem}
+  :root{--car-h:min(36vh, 340px)}
+  /* header compact + nav défilante horizontale */
+  header{padding:.9rem 1rem;gap:.8rem}
+  .logo{font-size:.85rem;letter-spacing:.25em;flex-shrink:0}
+  nav{gap:1rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;white-space:nowrap;padding-bottom:.2rem;min-width:0}
+  nav::-webkit-scrollbar{display:none}
+  nav button{font-size:.58rem;letter-spacing:.12em;flex-shrink:0}
+  /* le contenu reste sous la voiture fixe */
+  main{padding:calc(var(--car-h) + 1.2rem) 1.2rem 4rem}
+  /* voiture + outils */
+  #car-stage{padding-top:64px}
+  #car3d-wrap{width:100vw}
+  #car-label{font-size:.55rem;letter-spacing:.35em;text-indent:.35em;top:calc(var(--car-h) - 26px)}
+  #car-tools{top:calc(var(--car-h) - 2px);gap:.4rem}
+  #car-tools button{font-size:.52rem;padding:.45rem .7rem}
+  #car-stage.tucked{transform:translateX(60vw) scale(.6)}
+  /* grilles & stats */
   .stats{flex-wrap:wrap}
   .stat{min-width:45%}
+  .grid{grid-template-columns:1fr}
+  /* contact / rdv */
   .contact-grid{grid-template-columns:1fr}
   .infos{border-left:none;padding-left:0;border-top:1px solid var(--gris-ligne);padding-top:2rem}
-  .service{grid-template-columns:60px 1fr;gap:1.2rem}
+  .day{min-width:52px;padding:.55rem .2rem}
+  .slot{padding:.5rem .8rem;font-size:.72rem}
+  /* services */
+  .service{grid-template-columns:52px 1fr;gap:1rem}
   .service .fleche{display:none}
+  /* financement : une colonne, résultat en dessous */
+  .finance{grid-template-columns:1fr;gap:1.8rem}
+  .fin-big{font-size:2.3rem}
+  /* comparateur : sélecteurs empilés, VS centré */
+  .compare-pick{flex-direction:column;align-items:stretch;gap:.8rem}
+  .cmp-vs{text-align:center}
+  .cmp-row{grid-template-columns:1fr auto 1fr;gap:.6rem;padding:.9rem 0}
+  .cmp-row .v{font-size:.92rem}
+  .cmp-row .k{font-size:.5rem;letter-spacing:.18em}
+  /* filtres occasions */
+  .filters{grid-template-columns:1fr;gap:1.2rem;padding:1.2rem}
+  /* footer */
+  footer{flex-direction:column;gap:.8rem;text-align:center;padding:2rem 1.2rem}
+  /* intro */
+  #intro .enter{font-size:.65rem;padding:.9rem 1.8rem;letter-spacing:.35em;text-indent:.35em}
+  #skip{top:1rem;right:1rem}
+}
+/* écrans très courts (téléphone en paysage) : voiture réduite */
+@media(max-height:520px){
+  :root{--car-h:min(46vh, 240px)}
+  #car-stage{padding-top:56px}
 }
 </style>
 </head>
@@ -664,7 +703,7 @@ window.switchCar = function(){};
     document.getElementById('car-svg-fallback').style.display='block';
     return;
   }
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, innerWidth < 820 ? 1.5 : 2));
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.15;
