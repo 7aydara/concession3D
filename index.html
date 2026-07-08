@@ -23,7 +23,7 @@
   --rouge-glow:rgba(225,6,0,.55);
   --display:'Archivo',sans-serif;
   --mono:'Space Grotesk',monospace;
-  --car-h:min(52vh, 520px);
+  --car-h:min(62vh, 620px);
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -53,22 +53,37 @@ a{color:inherit;text-decoration:none}
 #intro.zooming{transform:scale(6);opacity:0;pointer-events:none}
 #intro .enter{
   margin-bottom:9vh;
-  background:transparent;border:1px solid rgba(242,242,244,.35);
-  color:var(--blanc);letter-spacing:.5em;text-indent:.5em;
+  background:rgba(255, 255, 255, 0.03);
+  border:1px solid #ffffff;
+  color:var(--blanc);
+  letter-spacing:.5em;text-indent:.5em;
   font-size:.75rem;padding:1.1rem 2.6rem;
-  transition:border-color .4s, box-shadow .4s, letter-spacing .4s;
-  animation:pulse 3s ease-in-out infinite;
+  text-transform:uppercase;
+  transition:border-color .4s, box-shadow .4s, letter-spacing .4s, background-color .4s;
+  box-shadow:0 0 8px rgba(255, 255, 255, 0.5), 0 0 20px var(--rouge-glow);
+  animation:neonPulse 2s ease-in-out infinite alternate;
 }
 #intro .enter:hover{
   border-color:var(--rouge);
-  box-shadow:0 0 30px var(--rouge-glow), inset 0 0 12px rgba(225,6,0,.2);
+  box-shadow:0 0 35px var(--rouge), 0 0 15px rgba(255,255,255,0.8), inset 0 0 12px rgba(225,6,0,.4);
   letter-spacing:.7em;text-indent:.7em;
+  background:rgba(225, 6, 0, 0.08);
 }
-@keyframes pulse{0%,100%{opacity:.75}50%{opacity:1}}
+@keyframes neonPulse{
+  0%{
+    box-shadow:0 0 4px rgba(255, 255, 255, 0.4), 0 0 12px var(--rouge-glow);
+    border-color:rgba(255, 255, 255, 0.8);
+  }
+  100%{
+    box-shadow:0 0 14px rgba(255, 255, 255, 0.7), 0 0 25px rgba(225, 6, 0, 0.85);
+    border-color:#ffffff;
+  }
+}
 .intro-ui{position:absolute;bottom:8vh;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:1.1rem;z-index:101}
 #loader{width:220px;height:1px;background:rgba(255,255,255,.15)}
 #loader-bar{height:100%;width:0;background:var(--rouge);box-shadow:0 0 12px var(--rouge-glow);transition:width .25s}
 #intro-hint{font-size:.62rem;letter-spacing:.5em;text-indent:.5em;text-transform:uppercase;color:var(--gris-clair);animation:pulse 3s ease-in-out infinite;text-align:center}
+@keyframes pulse{0%,100%{opacity:.75}50%{opacity:1}}
 #skip{position:absolute;top:1.6rem;right:2rem;z-index:102;background:none;border:none;color:var(--gris);font-family:var(--mono);font-size:.62rem;letter-spacing:.3em;text-transform:uppercase;transition:color .3s}
 #skip:hover{color:var(--blanc)}
 #intro.fade{opacity:0;pointer-events:none;transition:opacity .9s ease}
@@ -133,19 +148,7 @@ nav button.active::after{width:100%}
   font-size:.64rem;letter-spacing:.55em;text-indent:.55em;color:var(--gris-clair);
   text-transform:uppercase;transition:opacity .4s;
 }
-/* barre d'outils 3D : 360° / zoom */
-#car-tools{
-  position:fixed;top:calc(var(--car-h) - 4px);left:50%;transform:translateX(-50%);
-  z-index:42;display:flex;gap:.6rem;pointer-events:auto;transition:opacity .4s;
-}
-#car-tools button{
-  background:rgba(13,13,15,.7);border:1px solid var(--gris-ligne);color:var(--gris-clair);
-  font-family:var(--mono);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;
-  padding:.55rem .9rem;backdrop-filter:blur(6px);transition:all .3s;
-}
-#car-tools button:hover{border-color:var(--rouge);color:var(--blanc);box-shadow:0 0 16px var(--rouge-glow)}
-#car-tools button.on{border-color:var(--rouge);color:var(--rouge)}
-#car-stage.tucked ~ #car-label,#car-stage.tucked ~ #car-tools{opacity:0;pointer-events:none}
+#car-stage.tucked ~ #car-label{opacity:0;pointer-events:none}
 /* faisceau lumineux qui balaie la carrosserie */
 .sweep{animation:sweep 4.5s cubic-bezier(.6,.1,.4,.9) infinite}
 @keyframes sweep{
@@ -464,11 +467,7 @@ footer .dot{color:var(--rouge)}
     </svg>
   </div>
   <div id="car-label">Chargement du modèle…</div>
-  <div id="car-tools">
-    <button id="btn-spin" class="on" title="Rotation automatique">360°</button>
-    <button id="btn-zoom" title="Zoom">Zoom +</button>
-    <button id="btn-reset" title="Recadrer">Reset</button>
-  </div>
+
 
   <main>
     <!-- ══════════ ACCUEIL ══════════ -->
@@ -632,6 +631,28 @@ footer .dot{color:var(--rouge)}
   </footer>
 </div>
 
+<div id="cors-warning-banner" style="display:none; position:fixed; bottom:24px; right:24px; z-index:9999; max-width:380px; background:rgba(7,7,8,0.96); border:1px solid var(--gris-ligne); border-left:3px solid var(--rouge); box-shadow:0 12px 40px rgba(0,0,0,0.8); padding:1.25rem 1.5rem; color:var(--blanc); font-family:var(--mono); backdrop-filter:blur(12px); border-radius:0px; opacity:0; transform:translateY(20px); transition:opacity 0.4s ease, transform 0.4s ease;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+    <div style="display:flex; align-items:center; gap:0.5rem;">
+      <span style="display:inline-block; width:6px; height:6px; background:var(--rouge); border-radius:50%; box-shadow:0 0 8px var(--rouge);"></span>
+      <span style="font-family:var(--display); font-weight:700; font-size:0.75rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--blanc);">Alerte CORS (file://)</span>
+    </div>
+    <button onclick="document.getElementById('cors-warning-banner').style.opacity='0'; setTimeout(()=>document.getElementById('cors-warning-banner').remove(), 400)" style="background:none; border:none; color:var(--gris); font-size:1.2rem; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; transition:color 0.2s;">&times;</button>
+  </div>
+  <p style="font-size:0.72rem; line-height:1.6; color:var(--gris); margin-bottom:1rem; font-weight:300;">
+    Votre navigateur bloque le chargement direct des fichiers 3D locaux. Le site s'affiche actuellement en <b>mode dégradé 2D (SVG)</b>.
+  </p>
+  <div style="position:relative; background:var(--noir-3); border:1px solid var(--gris-ligne); padding:0.6rem 0.8rem; font-size:0.7rem; font-family:monospace; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center;">
+    <code id="cmd-text" style="color:var(--gris-clair);">python -m http.server 8000</code>
+    <button onclick="navigator.clipboard.writeText('python -m http.server 8000'); this.textContent='Copié!'; setTimeout(()=>this.textContent='Copier', 2000)" style="margin-left:auto; background:var(--noir-2); border:1px solid var(--gris-ligne); color:var(--gris-clair); font-size:0.55rem; padding:0.2rem 0.5rem; text-transform:uppercase; font-family:var(--mono); cursor:pointer; transition:all 0.2s;">Copier</button>
+  </div>
+  <p style="font-size:0.72rem; line-height:1.6; color:var(--gris); font-weight:300;">
+    1. Copiez la commande ci-dessus.<br>
+    2. Collez-la dans votre terminal dans ce dossier.<br>
+    3. Ouvrez <a href="http://localhost:8000" target="_blank" style="color:var(--blanc); text-decoration:underline; font-weight:500;">http://localhost:8000</a>.
+  </p>
+</div>
+
 <script src="three.min.js"></script>
 <script src="GLTFLoader.js"></script>
 <script src="DRACOLoader.js"></script>
@@ -695,12 +716,70 @@ window.switchCar = function(){};
 
 (function initGarage(){
   const canvas = document.getElementById('car3d');
+
+  const CARS = {
+    amg:    {file:'models/amg.glb'},
+    cclasse:{file:'models/cclasse.glb'},
+    m4:     {file:'models/m4.glb'},
+    p911:   {file:'models/p911.glb'},
+  };
+
+  function useSVGFallback(showCorsWarning) {
+    document.getElementById('car3d-wrap').style.display = 'none';
+    document.getElementById('car-svg-fallback').style.display = 'block';
+    
+    if (showCorsWarning) {
+      const banner = document.getElementById('cors-warning-banner');
+      if (banner) {
+        banner.style.display = 'block';
+        setTimeout(() => {
+          banner.style.opacity = '1';
+          banner.style.transform = 'translateY(0)';
+        }, 100);
+      }
+    }
+    
+    window.switchCar = function(name, lab){
+      if(!CARS[name]) name = 'amg';
+      document.getElementById('car-stage').classList.remove('tucked');
+      if(window.scrollY > 60) window.scrollTo({top:0, behavior:'smooth'});
+      if(lab !== undefined){
+        const label = document.getElementById('car-label');
+        if (label) {
+          label.style.opacity = 0;
+          setTimeout(()=>{ label.textContent = lab; label.style.opacity = 1; }, 300);
+        }
+      }
+      const coupe = document.getElementById('car-coupe');
+      const suv = document.getElementById('car-suv');
+      if (coupe && suv) {
+        if (name === 'cclasse') {
+          coupe.classList.add('hidden');
+          suv.classList.remove('hidden');
+        } else {
+          coupe.classList.remove('hidden');
+          suv.classList.add('hidden');
+        }
+      }
+    };
+    
+    const label = document.getElementById('car-label');
+    if (label) label.textContent = "Mercedes-AMG GT4 — Mode dégradé (SVG)";
+  }
+
+  const isLocalFile = window.location.protocol === 'file:';
+  if (isLocalFile) {
+    console.warn("CORS restrictions prevent loading GLB models on file:// protocol. Falling back to SVG.");
+    useSVGFallback(true);
+    return;
+  }
+
   let renderer;
   try{
     renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
   }catch(e){
-    document.getElementById('car3d-wrap').style.display='none';
-    document.getElementById('car-svg-fallback').style.display='block';
+    console.error("WebGL not supported, falling back to SVG.", e);
+    useSVGFallback(false);
     return;
   }
   renderer.setPixelRatio(Math.min(devicePixelRatio, innerWidth < 820 ? 1.5 : 2));
@@ -762,12 +841,6 @@ window.switchCar = function(){};
   const loader = new THREE.GLTFLoader();
   loader.setDRACOLoader(draco);
 
-  const CARS = {
-    amg:    {file:'models/amg.glb'},
-    cclasse:{file:'models/cclasse.glb'},
-    m4:     {file:'models/m4.glb'},
-    p911:   {file:'models/p911.glb'},
-  };
   const cars = {};
   let current = 'amg', pending = null, spin = .5;
 
@@ -854,14 +927,8 @@ window.switchCar = function(){};
   wrap.addEventListener('pointercancel', endDrag);
   wrap.addEventListener('pointerleave', endDrag);
 
-  /* ─── contrôles 360° / zoom / reset ─── */
+  /* rotation auto toujours active */
   let autoSpin = true, zoomed = false;
-  const bSpin = document.getElementById('btn-spin');
-  const bZoom = document.getElementById('btn-zoom');
-  const bReset = document.getElementById('btn-reset');
-  if(bSpin) bSpin.onclick = ()=>{ autoSpin = !autoSpin; bSpin.classList.toggle('on', autoSpin); };
-  if(bZoom) bZoom.onclick = ()=>{ zoomed = !zoomed; bZoom.classList.toggle('on', zoomed); bZoom.textContent = zoomed ? 'Zoom −' : 'Zoom +'; };
-  if(bReset) bReset.onclick = ()=>{ spin = .5; zoomed = false; if(bZoom){ bZoom.classList.remove('on'); bZoom.textContent = 'Zoom +'; } };
 
   /* ─── boucle ─── */
   function resize(){
@@ -944,7 +1011,7 @@ class FrameSequence{
     const c=this.canvas, x=this.ctx;
     c.width = innerWidth; c.height = innerHeight;
     if(a) this._blit(x, a, c, 1);
-    if(b && f > 0.001) this._blit(x, b, c, f);   // fondu vers la frame suivante
+    if(b && f > 0.001) this._blit(x, b, c, f);
     if(dark > 0){ x.fillStyle = `rgba(0,0,0,${Math.min(dark,1)})`; x.fillRect(0,0,c.width,c.height); }
     this.last = i;
   }
@@ -990,11 +1057,11 @@ function startJourney(){
   document.body.style.height = (SEQ.count * 8) + 'px';
   scrollTo(0,0);
 
-  const FADE_START = .90; // fondu au noir sur la fin (dernière frame non noire)
+  const FADE_START = .90;
   let target = 0, cur = 0;
   const render = ()=>{
     if(SEQ.done) return;
-    cur += (target - cur) * 0.12;                 // lerp → rattrapage doux
+    cur += (target - cur) * 0.12;
     if(Math.abs(target - cur) < 0.002) cur = target;
     const dark = cur > FADE_START ? (cur - FADE_START) / (1 - FADE_START) : 0;
     SEQ.draw(cur * (SEQ.count - 1), dark);
@@ -1011,7 +1078,7 @@ function startJourney(){
   addEventListener('scroll', onScroll, {passive:true});
   addEventListener('resize', ()=>{ if(!SEQ.done) SEQ.draw(cur * (SEQ.count-1)); });
   SEQ._onScroll = onScroll;
-  requestAnimationFrame(render);                  // boucle continue = fluidité
+  requestAnimationFrame(render);
 }
 
 function finishIntro(){
