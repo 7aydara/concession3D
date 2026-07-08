@@ -23,7 +23,7 @@
   --rouge-glow:rgba(225,6,0,.55);
   --display:'Archivo',sans-serif;
   --mono:'Space Grotesk',monospace;
-  --car-h:min(30vh, 300px);
+  --car-h:min(52vh, 520px);
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -111,24 +111,41 @@ nav button.active::after{width:100%}
    Silhouette SVG + balayage lumineux + halo rouge
    ============================================================ */
 #car-stage{
-  position:sticky;top:0;z-index:40;
-  height:calc(var(--car-h) + 110px);
-  padding-top:88px;
-  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  position:fixed;top:0;left:0;right:0;z-index:40;
+  height:var(--car-h);
+  padding-top:76px;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
   pointer-events:none;
-  background:
-    radial-gradient(ellipse 60% 90% at 50% 15%, rgba(35,35,40,.55), transparent 65%),
-    linear-gradient(to bottom, var(--noir) 55%, rgba(7,7,8,.0));
+  background:radial-gradient(ellipse 55% 80% at 50% 30%, rgba(30,30,36,.45), transparent 70%);
+  transition:transform .5s cubic-bezier(.55,0,.3,1), opacity .5s ease;
+  will-change:transform,opacity;
 }
-#car-stage svg{height:var(--car-h);width:auto;max-width:92vw;overflow:visible}
-#car3d-wrap{height:var(--car-h);width:min(900px,92vw);display:flex;align-items:flex-end;justify-content:center;pointer-events:auto}
+/* décalage à droite + disparition quand on scrolle vers le bas */
+#car-stage.tucked{transform:translateX(46vw) scale(.72);opacity:0}
+#car-stage svg{height:60vh;width:auto;max-width:92vw;overflow:visible}
+#car3d-wrap{height:var(--car-h);width:min(1200px,96vw);display:flex;align-items:center;justify-content:center;pointer-events:auto}
 #car3d{width:100%;height:100%;display:block}
 .car-model{transition:opacity .6s ease}
 .car-model.hidden{opacity:0;position:absolute}
 #car-label{
-  font-size:.62rem;letter-spacing:.55em;text-indent:.55em;color:var(--gris);
-  text-transform:uppercase;margin-top:.4rem;transition:opacity .4s;
+  position:fixed;top:calc(var(--car-h) - 30px);left:0;right:0;z-index:41;
+  text-align:center;pointer-events:none;
+  font-size:.64rem;letter-spacing:.55em;text-indent:.55em;color:var(--gris-clair);
+  text-transform:uppercase;transition:opacity .4s;
 }
+/* barre d'outils 3D : 360° / zoom */
+#car-tools{
+  position:fixed;top:calc(var(--car-h) - 4px);left:50%;transform:translateX(-50%);
+  z-index:42;display:flex;gap:.6rem;pointer-events:auto;transition:opacity .4s;
+}
+#car-tools button{
+  background:rgba(13,13,15,.7);border:1px solid var(--gris-ligne);color:var(--gris-clair);
+  font-family:var(--mono);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;
+  padding:.55rem .9rem;backdrop-filter:blur(6px);transition:all .3s;
+}
+#car-tools button:hover{border-color:var(--rouge);color:var(--blanc);box-shadow:0 0 16px var(--rouge-glow)}
+#car-tools button.on{border-color:var(--rouge);color:var(--rouge)}
+#car-stage.tucked ~ #car-label,#car-stage.tucked ~ #car-tools{opacity:0;pointer-events:none}
 /* faisceau lumineux qui balaie la carrosserie */
 .sweep{animation:sweep 4.5s cubic-bezier(.6,.1,.4,.9) infinite}
 @keyframes sweep{
@@ -145,7 +162,7 @@ nav button.active::after{width:100%}
 /* ============================================================
    4. PAGES
    ============================================================ */
-main{position:relative;z-index:10;max-width:1180px;margin:0 auto;padding:2.5rem 3rem 6rem}
+main{position:relative;z-index:10;max-width:1180px;margin:0 auto;padding:calc(var(--car-h) + 1.5rem) 3rem 6rem}
 .page{display:none;animation:rise .7s ease both}
 .page.active{display:block}
 @keyframes rise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
@@ -227,6 +244,54 @@ form input:focus,form select:focus,form textarea:focus{outline:none;border-color
 .infos h4:first-child{margin-top:0}
 .infos p{font-size:.85rem;color:var(--gris-clair);line-height:1.8}
 
+/* ─── filtres occasions ─── */
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.6rem;margin:2.5rem 0;padding:1.8rem;background:var(--noir-2);border:1px solid var(--gris-ligne)}
+.filter label{display:block;font-size:.58rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gris);margin-bottom:.8rem}
+.filter label b{color:var(--gris-clair);letter-spacing:.05em}
+.filter select{width:100%;background:var(--noir-3);border:1px solid var(--gris-ligne);color:var(--blanc);font-family:var(--mono);font-size:.82rem;padding:.7rem}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--gris-ligne);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--rouge);cursor:pointer;box-shadow:0 0 10px var(--rouge-glow)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border:none;border-radius:50%;background:var(--rouge);cursor:pointer;box-shadow:0 0 10px var(--rouge-glow)}
+
+/* ─── comparateur ─── */
+.compare-pick{display:flex;align-items:center;gap:1.5rem;margin:2.5rem 0;flex-wrap:wrap}
+.cmp-sel{flex:1;min-width:240px;background:var(--noir-2);border:1px solid var(--gris-ligne);color:var(--blanc);font-family:var(--mono);font-size:.9rem;padding:1rem}
+.cmp-sel:focus{outline:none;border-color:var(--rouge)}
+.cmp-vs{font-family:var(--display);font-weight:900;color:var(--rouge);font-size:1.2rem;letter-spacing:.1em}
+.cmp-table{border-top:1px solid var(--gris-ligne)}
+.cmp-row{display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;padding:1.1rem 0;border-bottom:1px solid var(--gris-ligne);align-items:center}
+.cmp-row .k{text-align:center;font-size:.56rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gris)}
+.cmp-row .v{font-family:var(--display);font-weight:700;color:var(--blanc);font-size:1.1rem}
+.cmp-row .v.left{text-align:right}.cmp-row .v.right{text-align:left}
+.cmp-row .v.win{color:var(--rouge)}
+
+/* ─── financement ─── */
+.finance{display:grid;grid-template-columns:1fr .9fr;gap:2.5rem;margin-top:2.5rem}
+.finance-controls label{display:block;font-size:.58rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gris);margin:1.4rem 0 .7rem}
+.finance-controls label:first-child{margin-top:0}
+.finance-controls label b{color:var(--gris-clair);letter-spacing:.05em}
+.finance-controls select{width:100%;background:var(--noir-2);border:1px solid var(--gris-ligne);color:var(--blanc);font-family:var(--mono);font-size:.85rem;padding:.8rem}
+.finance-result{background:var(--noir-2);border:1px solid var(--gris-ligne);padding:2rem;display:flex;flex-direction:column;justify-content:center}
+.fin-lab{font-size:.58rem;letter-spacing:.35em;text-transform:uppercase;color:var(--rouge)}
+.fin-big{font-family:var(--display);font-weight:900;color:var(--blanc);font-size:3rem;line-height:1;margin:.6rem 0 1.6rem}
+.fin-big small{font-family:var(--mono);font-weight:300;font-size:.9rem;color:var(--gris);letter-spacing:.05em}
+.fin-lines div{display:flex;justify-content:space-between;padding:.7rem 0;border-top:1px solid var(--gris-ligne);font-size:.8rem}
+.fin-lines span{color:var(--gris)}.fin-lines b{color:var(--gris-clair);font-weight:500}
+
+/* ─── prise de rendez-vous ─── */
+.days{display:flex;gap:.5rem;flex-wrap:wrap}
+.day{flex:1;min-width:64px;background:var(--noir-2);border:1px solid var(--gris-ligne);color:var(--gris-clair);padding:.7rem .3rem;text-align:center;cursor:pointer;transition:all .25s}
+.day span{display:block;font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gris)}
+.day b{display:block;font-family:var(--display);font-weight:700;font-size:1.1rem;margin-top:.2rem}
+.day:hover{border-color:#3a3a3f}
+.day.sel{border-color:var(--rouge);box-shadow:0 0 16px rgba(225,6,0,.2)}
+.day.sel b{color:var(--rouge)}
+.slots{display:flex;gap:.5rem;flex-wrap:wrap}
+.slot{background:var(--noir-2);border:1px solid var(--gris-ligne);color:var(--gris-clair);padding:.6rem 1rem;font-size:.78rem;cursor:pointer;transition:all .25s}
+.slot:hover{border-color:#3a3a3f}
+.slot.sel{border-color:var(--rouge);color:var(--rouge)}
+.slot.taken{opacity:.3;cursor:not-allowed;text-decoration:line-through}
+
 footer{
   border-top:1px solid var(--gris-ligne);margin-top:4rem;padding:2.5rem 3rem;
   display:flex;justify-content:space-between;align-items:center;
@@ -273,7 +338,9 @@ footer .dot{color:var(--rouge)}
     <nav id="nav">
       <button data-page="accueil" data-car="amg" data-label="Mercedes-AMG GT4 — faites-la tourner" class="active">Accueil</button>
       <button data-page="modeles" data-car="amg" data-label="Gamme — cliquez un modèle pour le voir">Modèles</button>
+      <button data-page="comparateur" data-car="amg" data-label="Comparateur — choisissez deux modèles">Comparateur</button>
       <button data-page="occasions" data-car="cclasse" data-label="Mercedes C-Coupé PD65CC — occasions">Occasions</button>
+      <button data-page="financement" data-car="p911" data-label="Financement — simulez vos mensualités">Financement</button>
       <button data-page="services" data-car="m4" data-label="BMW M4 CSL — atelier & services">Services</button>
       <button data-page="contact" data-car="p911" data-label="Porsche 911 — essai sur rendez-vous">Contact</button>
     </nav>
@@ -356,7 +423,12 @@ footer .dot{color:var(--rouge)}
         <circle cx="674" cy="242" r="6" fill="#e10600" opacity=".8"/>
       </g>
     </svg>
-    <div id="car-label">Chargement du modèle…</div>
+  </div>
+  <div id="car-label">Chargement du modèle…</div>
+  <div id="car-tools">
+    <button id="btn-spin" class="on" title="Rotation automatique">360°</button>
+    <button id="btn-zoom" title="Zoom">Zoom +</button>
+    <button id="btn-reset" title="Recadrer">Reset</button>
   </div>
 
   <main>
@@ -399,14 +471,73 @@ footer .dot{color:var(--rouge)}
       <div class="eyebrow">Occasions certifiées</div>
       <h1>Seconde vie,<br><span class="thin">même lumière.</span></h1>
       <p class="lead">Chaque occasion passe 180 points de contrôle en atelier, repart avec 24 mois de garantie et un historique d'entretien complet.</p>
-      <div class="grid">
-        <div class="card" style="cursor:pointer" onclick="switchCar('amg','Mercedes-AMG GT4 — 2023')"><span class="tag">2023 · 21 400 km</span><h3>Mercedes-AMG GT</h3><p>Noir obsidienne, intérieur rouge braise, première main, carnet complet.</p><div class="prix">124 900 € <small>garantie 24 mois</small></div></div>
-        <div class="card" style="cursor:pointer" onclick="switchCar('cclasse','Mercedes C-Coupé PD65CC — 2022')"><span class="tag">2022 · 38 200 km</span><h3>Mercedes C-Coupé PD65CC</h3><p>Gris tungstène, préparation Prior Design complète, historique atelier.</p><div class="prix">61 500 € <small>garantie 24 mois</small></div></div>
-        <div class="card" style="cursor:pointer" onclick="switchCar('m4','BMW M4 CSL — 2024')"><span class="tag">2024 · 9 800 km</span><h3>BMW M4 CSL</h3><p>Frozen Brooklyn Grey, céramiques, sous garantie constructeur.</p><div class="prix">148 900 € <small>garantie 24 mois</small></div></div>
-        <div class="card" style="cursor:pointer" onclick="switchCar('p911','Porsche 911 Carrera 4S — 2021')"><span class="tag">2021 · 54 000 km</span><h3>Porsche 911 Carrera 4S</h3><p>Gris graphite mat, échappement sport, révision majeure effectuée.</p><div class="prix">109 800 € <small>garantie 24 mois</small></div></div>
+      <div class="filters">
+        <div class="filter">
+          <label>Prix maximum — <b id="f-prix-val">160 000 €</b></label>
+          <input type="range" id="f-prix" min="50000" max="160000" step="5000" value="160000">
+        </div>
+        <div class="filter">
+          <label>Année minimum — <b id="f-annee-val">2021</b></label>
+          <input type="range" id="f-annee" min="2021" max="2024" step="1" value="2021">
+        </div>
+        <div class="filter">
+          <label>Kilométrage max — <b id="f-km-val">60 000 km</b></label>
+          <input type="range" id="f-km" min="9000" max="60000" step="1000" value="60000">
+        </div>
+        <div class="filter">
+          <label>Marque</label>
+          <select id="f-marque"><option value="">Toutes</option><option>Mercedes</option><option>BMW</option><option>Porsche</option></select>
+        </div>
       </div>
+      <div class="grid" id="occasions-grid"></div>
+      <p id="occasions-empty" class="lead" style="display:none">Aucun véhicule ne correspond à ces critères. Élargissez la recherche.</p>
       <button class="btn" onclick="goTo('contact')">Demander la liste complète</button>
     </section>
+
+    <!-- ══════════ COMPARATEUR ══════════ -->
+    <section class="page" id="page-comparateur">
+      <div class="eyebrow">Comparateur</div>
+      <h1>Face<span class="thin"> à face.</span></h1>
+      <p class="lead">Choisissez deux modèles et comparez-les caractéristique par caractéristique.</p>
+      <div class="compare-pick">
+        <select id="cmp-a" class="cmp-sel"></select>
+        <span class="cmp-vs">VS</span>
+        <select id="cmp-b" class="cmp-sel"></select>
+      </div>
+      <div id="cmp-table" class="cmp-table"></div>
+    </section>
+
+    <!-- ══════════ FINANCEMENT ══════════ -->
+    <section class="page" id="page-financement">
+      <div class="eyebrow">Financement</div>
+      <h1>Votre<br><span class="thin">mensualité.</span></h1>
+      <p class="lead">Simulez un financement en quelques secondes. Estimation indicative — l'offre définitive est établie en concession. Nous ne sommes pas un organisme de crédit.</p>
+      <div class="finance">
+        <div class="finance-controls">
+          <label>Modèle</label>
+          <select id="fin-model"></select>
+          <label>Prix du véhicule — <b id="fin-prix-val"></b></label>
+          <input type="range" id="fin-prix" min="40000" max="200000" step="1000">
+          <label>Apport — <b id="fin-apport-val">10 000 €</b></label>
+          <input type="range" id="fin-apport" min="0" max="80000" step="1000" value="10000">
+          <label>Durée — <b id="fin-duree-val">48 mois</b></label>
+          <input type="range" id="fin-duree" min="12" max="84" step="12" value="48">
+          <label>Taux annuel (TAEG) — <b id="fin-taux-val">4,9 %</b></label>
+          <input type="range" id="fin-taux" min="1.9" max="8.9" step="0.1" value="4.9">
+        </div>
+        <div class="finance-result">
+          <span class="fin-lab">Mensualité estimée</span>
+          <div class="fin-big"><span id="fin-mensualite">—</span><small> / mois</small></div>
+          <div class="fin-lines">
+            <div><span>Montant financé</span><b id="fin-finance">—</b></div>
+            <div><span>Coût du crédit</span><b id="fin-cout">—</b></div>
+            <div><span>Total dû</span><b id="fin-total">—</b></div>
+          </div>
+          <button class="btn plein" onclick="goTo('contact')">Prendre rendez-vous</button>
+        </div>
+      </div>
+    </section>
+
 
     <!-- ══════════ SERVICES ══════════ -->
     <section class="page" id="page-services">
@@ -427,16 +558,20 @@ footer .dot{color:var(--rouge)}
       <div class="eyebrow">Essai & contact</div>
       <h1>Prenez<br><span class="thin">le volant.</span></h1>
       <div class="contact-grid">
-        <form onsubmit="event.preventDefault(); this.innerHTML='<p class=lead style=margin-top:2rem>Demande envoyée. Un conseiller vous rappelle sous 48 h.</p>'">
+        <form id="rdv-form" onsubmit="return submitRdv(event)">
           <label>Nom complet</label>
           <input type="text" required placeholder="Votre nom">
           <label>Téléphone</label>
           <input type="tel" required placeholder="+212 6 00 00 00 00">
           <label>Modèle souhaité</label>
-          <select><option>Mercedes-AMG GT4</option><option>Mercedes C-Coupé PD65CC</option><option>BMW M4 CSL</option><option>Porsche 911 Carrera 4S</option><option>Occasion — à préciser</option></select>
-          <label>Message</label>
-          <textarea rows="4" placeholder="Créneau souhaité, questions…"></textarea>
-          <button class="btn plein" type="submit">Envoyer la demande</button>
+          <select id="rdv-model"><option>Mercedes-AMG GT4</option><option>Mercedes C-Coupé PD65CC</option><option>BMW M4 CSL</option><option>Porsche 911 Carrera 4S</option><option>Occasion — à préciser</option></select>
+          <label>Date de l'essai</label>
+          <div class="days" id="rdv-days"></div>
+          <label>Créneau</label>
+          <div class="slots" id="rdv-slots"></div>
+          <label>Message (optionnel)</label>
+          <textarea rows="3" placeholder="Questions, précisions…"></textarea>
+          <button class="btn plein" type="submit">Confirmer le rendez-vous</button>
         </form>
         <div class="infos">
           <h4>Showroom</h4>
@@ -468,6 +603,30 @@ footer .dot{color:var(--rouge)}
 const nav = document.getElementById('nav');
 const label = document.getElementById('car-label');
 
+/* ─── comportement scroll : la voiture glisse à droite et disparaît en
+       descendant, revient dès qu'on remonte ─── */
+(function(){
+  const stage = document.getElementById('car-stage');
+  let lastY = 0, ticking = false;
+  function update(){
+    const y = window.scrollY;
+    const goingDown = y > lastY;
+    // au-delà d'un petit seuil de scroll : si on descend → range la voiture ;
+    // si on remonte → la ramène. Toujours visible tout en haut.
+    if(y < 40){
+      stage.classList.remove('tucked');
+    }else if(goingDown && y > 120){
+      stage.classList.add('tucked');
+    }else if(!goingDown){
+      stage.classList.remove('tucked');
+    }
+    lastY = y; ticking = false;
+  }
+  addEventListener('scroll', ()=>{
+    if(!ticking){ requestAnimationFrame(update); ticking = true; }
+  }, {passive:true});
+})();
+
 function goTo(name){
   const btn = nav.querySelector(`[data-page="${name}"]`);
   if(btn) btn.click();
@@ -481,7 +640,7 @@ nav.addEventListener('click', e=>{
   document.getElementById('page-'+btn.dataset.page).classList.add('active');
 
   // la voiture change de modèle 3D selon la page — mais reste toujours là
-  switchCar(btn.dataset.car, btn.dataset.label);
+  window.switchCar(btn.dataset.car, btn.dataset.label);
   window.scrollTo({top:0, behavior:'smooth'});
 });
 
@@ -493,7 +652,7 @@ nav.addEventListener('click', e=>{
    Rotation à la souris (drag), balayage lumineux, halo rouge.
    ============================================================ */
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
-let switchCar = ()=>{};
+window.switchCar = function(){};
 
 (function initGarage(){
   const canvas = document.getElementById('car3d');
@@ -511,8 +670,10 @@ let switchCar = ()=>{};
   renderer.toneMappingExposure = 1.15;
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(32, 2, .1, 60);
-  camera.position.set(4.7, 1.7, 5.7);
+  const camera = new THREE.PerspectiveCamera(30, 2, .1, 60);
+  const CAM_BASE = new THREE.Vector3(5.4, 1.9, 6.4);
+  const CAM_ZOOM = new THREE.Vector3(3.6, 1.35, 4.3);
+  camera.position.copy(CAM_BASE);
   camera.lookAt(0, .55, 0);
 
   /* ─── environnement studio pour les reflets des carrosseries :
@@ -526,32 +687,31 @@ let switchCar = ()=>{};
   const red = mk(6, 1.2, 0xe10600); red.position.set(0, .6, -8); env.add(red);
   scene.environment = pmrem.fromScene(env, .04).texture;
 
-  /* ─── éclairage : pénombre + faisceau qui balaie + rouge ─── */
-  scene.add(new THREE.HemisphereLight(0x3a3a44, 0x08080a, .7));
-  const key = new THREE.DirectionalLight(0xffffff, .5);
+  /* ─── éclairage cinéma sobre : pénombre + deux faisceaux lents + rouge doux ─── */
+  scene.add(new THREE.HemisphereLight(0x3a3a45, 0x0a0a0d, .8));
+  const key = new THREE.DirectionalLight(0xffffff, .6);
   key.position.set(2, 6, 3); scene.add(key);
-  const sweep = new THREE.PointLight(0xffffff, 2.6, 12, 2);
-  sweep.position.set(0, 2.6, 2.6); scene.add(sweep);
-  const under = new THREE.PointLight(0xe10600, 1.0, 3.2, 2);
-  under.position.set(0, .3, 0); scene.add(under);
+  // faisceau principal qui balaie doucement la carrosserie
+  const sweep = new THREE.SpotLight(0xffffff, 3.2, 16, Math.PI/6, .5, 1.4);
+  sweep.position.set(0, 3.2, 3.0); scene.add(sweep); scene.add(sweep.target);
+  // second faisceau, plus froid, en contre, très lent
+  const rim = new THREE.SpotLight(0xbfd0ff, 1.6, 16, Math.PI/7, .6, 1.4);
+  rim.position.set(-4, 2.4, -3); scene.add(rim); scene.add(rim.target);
+  // point rouge sous la voiture
+  const under = new THREE.PointLight(0xe10600, 1.0, 4, 2);
+  under.position.set(0, .35, 0); scene.add(under);
 
-  /* ─── sol sombre ─── */
-  const ground = new THREE.Mesh(
-    new THREE.CircleGeometry(7, 48),
-    new THREE.MeshStandardMaterial({color:0x0b0b0d, roughness:.55, metalness:.3})
-  );
-  ground.rotation.x = -Math.PI/2; scene.add(ground);
-
-  // nappe rouge sous la voiture (dégradé radial doux)
+  // PAS de sol : le fond du site reste uni, seul le halo rouge subsiste.
+  // halo rouge (dégradé radial doux) posé au niveau du sol de la voiture
   (function(){
     const cv = document.createElement('canvas'); cv.width = cv.height = 256;
     const g = cv.getContext('2d');
     const rg = g.createRadialGradient(128,128,10,128,128,128);
-    rg.addColorStop(0,'rgba(225,6,0,.55)'); rg.addColorStop(1,'rgba(225,6,0,0)');
+    rg.addColorStop(0,'rgba(225,6,0,.5)'); rg.addColorStop(1,'rgba(225,6,0,0)');
     g.fillStyle = rg; g.fillRect(0,0,256,256);
     const tex = new THREE.CanvasTexture(cv);
     const disc = new THREE.Mesh(
-      new THREE.PlaneGeometry(6.5, 3.4),
+      new THREE.PlaneGeometry(7.5, 3.6),
       new THREE.MeshBasicMaterial({map:tex, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending})
     );
     disc.rotation.x = -Math.PI/2; disc.position.y = .01; scene.add(disc);
@@ -580,7 +740,7 @@ let switchCar = ()=>{};
     if(size.x > size.z) obj.rotation.y = Math.PI/2;   // longueur toujours sur Z
     box = new THREE.Box3().setFromObject(obj);
     size = box.getSize(new THREE.Vector3());
-    const s = 4.6 / Math.max(size.x, size.z);   // même longueur pour toutes
+    const s = 5.6 / Math.max(size.x, size.z);   // voitures plus grandes, même longueur
     obj.scale.setScalar(s);
     box = new THREE.Box3().setFromObject(obj);
     const c = box.getCenter(new THREE.Vector3());
@@ -614,8 +774,11 @@ let switchCar = ()=>{};
     }, undefined, err=> console.error('modèle', key, err));
   }
 
-  switchCar = function(name, lab){
+  window.switchCar = function(name, lab){
     if(!CARS[name]) name = 'amg';
+    // ramène la grande voiture en haut de page
+    document.getElementById('car-stage').classList.remove('tucked');
+    if(window.scrollY > 60) window.scrollTo({top:0, behavior:'smooth'});
     if(lab !== undefined){
       label.style.opacity = 0;
       setTimeout(()=>{ label.textContent = lab; label.style.opacity = 1; }, 300);
@@ -652,6 +815,15 @@ let switchCar = ()=>{};
   wrap.addEventListener('pointercancel', endDrag);
   wrap.addEventListener('pointerleave', endDrag);
 
+  /* ─── contrôles 360° / zoom / reset ─── */
+  let autoSpin = true, zoomed = false;
+  const bSpin = document.getElementById('btn-spin');
+  const bZoom = document.getElementById('btn-zoom');
+  const bReset = document.getElementById('btn-reset');
+  if(bSpin) bSpin.onclick = ()=>{ autoSpin = !autoSpin; bSpin.classList.toggle('on', autoSpin); };
+  if(bZoom) bZoom.onclick = ()=>{ zoomed = !zoomed; bZoom.classList.toggle('on', zoomed); bZoom.textContent = zoomed ? 'Zoom −' : 'Zoom +'; };
+  if(bReset) bReset.onclick = ()=>{ spin = .5; zoomed = false; if(bZoom){ bZoom.classList.remove('on'); bZoom.textContent = 'Zoom +'; } };
+
   /* ─── boucle ─── */
   function resize(){
     const w = canvas.clientWidth, h = canvas.clientHeight;
@@ -660,21 +832,33 @@ let switchCar = ()=>{};
       camera.aspect = w / h; camera.updateProjectionMatrix();
     }
   }
+  const camTarget = new THREE.Vector3();
   let t0 = performance.now();
   function loop(now){
     const dt = Math.min((now - t0) / 1000, .05); t0 = now;
     resize();
     if(!dragging){
-      if(now - lastTouch > 2600){        // reprise de la rotation auto
-        if(!REDUCED) spin += dt * .3;
+      if(now - lastTouch > 2600){
+        if(!REDUCED && autoSpin) spin += dt * .28;   // rotation auto lente
       }else{
-        spin += vel; vel *= .93;         // inertie après le lâcher
+        spin += vel; vel *= .93;
       }
     }
     if(cars[current] && cars[current].visible) cars[current].rotation.y = spin;
+
+    // zoom caméra fluide
+    camTarget.copy(zoomed ? CAM_ZOOM : CAM_BASE);
+    camera.position.lerp(camTarget, .08);
+    camera.lookAt(0, .55, 0);
+
     if(!REDUCED){
-      sweep.position.x = Math.sin(now * .00048) * 5.6;
-      under.intensity = 1.0 + Math.sin(now * .002) * .45;
+      // faisceau cinéma : balaie lentement, en douceur
+      const a = now * .00026;
+      sweep.position.x = Math.sin(a) * 4.4;
+      sweep.position.z = 2.4 + Math.cos(a) * 1.2;
+      sweep.target.position.set(Math.sin(a) * 1.2, .5, 0);
+      rim.target.position.set(0, .5, 0);
+      under.intensity = .85 + Math.sin(now * .0016) * .35;   // rouge qui respire
     }
     renderer.render(scene, camera);
     requestAnimationFrame(loop);
@@ -812,6 +996,150 @@ function skipIntro(){
   if(!journeyOn){ journeyOn = true; }
   finishIntro();
 }
+
+/* ============================================================
+   DONNÉES & FONCTIONNALITÉS
+   ============================================================ */
+const MODELS = {
+  amg:     {nom:'Mercedes-AMG GT4',            car:'amg',     prix:199000, ch:510, kmh:295, sec:3.6, moteur:'V8 biturbo'},
+  cclasse: {nom:'Mercedes C-Coupé PD65CC',     car:'cclasse', prix:96500,  ch:510, kmh:280, sec:3.9, moteur:'V6 preparé'},
+  m4:      {nom:'BMW M4 CSL',                  car:'m4',      prix:165000, ch:550, kmh:307, sec:3.7, moteur:'6 en ligne'},
+  p911:    {nom:'Porsche 911 Carrera 4S',      car:'p911',    prix:139800, ch:450, kmh:306, sec:3.4, moteur:'Flat-6 biturbo'},
+};
+const OCCASIONS = [
+  {key:'amg',     marque:'Mercedes', nom:'Mercedes-AMG GT',            an:2023, km:21400, prix:124900, desc:'Noir obsidienne, intérieur rouge braise, première main.'},
+  {key:'cclasse', marque:'Mercedes', nom:'Mercedes C-Coupé PD65CC',    an:2022, km:38200, prix:61500,  desc:'Gris tungstène, préparation Prior Design complète.'},
+  {key:'m4',      marque:'BMW',      nom:'BMW M4 CSL',                 an:2024, km:9800,  prix:148900, desc:'Frozen Brooklyn Grey, céramiques, sous garantie.'},
+  {key:'p911',    marque:'Porsche',  nom:'Porsche 911 Carrera 4S',     an:2021, km:54000, prix:109800, desc:'Gris graphite mat, échappement sport, révisée.'},
+  {key:'m4',      marque:'BMW',      nom:'BMW M4 CSL',                 an:2023, km:31200, prix:139000, desc:'Sào Paulo Yellow, pack carbone, jantes forgées.'},
+  {key:'p911',    marque:'Porsche',  nom:'Porsche 911 Carrera 4S',     an:2022, km:22800, prix:121500, desc:'Blanc craie, pack Sport Chrono, sièges chauffants.'},
+];
+const euro = n => n.toLocaleString('fr-FR') + ' €';
+
+/* ---- Occasions filtrables ---- */
+(function(){
+  const grid = document.getElementById('occasions-grid');
+  const empty = document.getElementById('occasions-empty');
+  if(!grid) return;
+  const fp = document.getElementById('f-prix'), fa = document.getElementById('f-annee'),
+        fk = document.getElementById('f-km'), fm = document.getElementById('f-marque');
+  const render = ()=>{
+    document.getElementById('f-prix-val').textContent = euro(+fp.value);
+    document.getElementById('f-annee-val').textContent = fa.value;
+    document.getElementById('f-km-val').textContent = (+fk.value).toLocaleString('fr-FR') + ' km';
+    const list = OCCASIONS.filter(o => o.prix <= +fp.value && o.an >= +fa.value && o.km <= +fk.value && (!fm.value || o.marque === fm.value));
+    grid.innerHTML = list.map(o => `
+      <div class="card" style="cursor:pointer" onclick="switchCar('${o.key}','${o.nom} — ${o.an}')">
+        <span class="tag">${o.an} · ${o.km.toLocaleString('fr-FR')} km</span>
+        <h3>${o.nom}</h3><p>${o.desc}</p>
+        <div class="prix">${euro(o.prix)} <small>garantie 24 mois</small></div>
+      </div>`).join('');
+    empty.style.display = list.length ? 'none' : 'block';
+  };
+  [fp,fa,fk,fm].forEach(el => el.addEventListener('input', render));
+  render();
+})();
+
+/* ---- Comparateur ---- */
+(function(){
+  const selA = document.getElementById('cmp-a'), selB = document.getElementById('cmp-b'), tbl = document.getElementById('cmp-table');
+  if(!selA) return;
+  const keys = Object.keys(MODELS);
+  const opts = keys.map(k => `<option value="${k}">${MODELS[k].nom}</option>`).join('');
+  selA.innerHTML = opts; selB.innerHTML = opts;
+  selA.value = 'amg'; selB.value = 'm4';
+  const ROWS = [
+    {k:'Puissance', f:m=>m.ch+' ch', better:m=>m.ch, hi:'max'},
+    {k:'0 à 100 km/h', f:m=>m.sec+' s', better:m=>m.sec, hi:'min'},
+    {k:'Vitesse max', f:m=>m.kmh+' km/h', better:m=>m.kmh, hi:'max'},
+    {k:'Moteur', f:m=>m.moteur, better:null},
+    {k:'Prix', f:m=>euro(m.prix), better:m=>m.prix, hi:'min'},
+  ];
+  const render = ()=>{
+    const a = MODELS[selA.value], b = MODELS[selB.value];
+    tbl.innerHTML = ROWS.map(r=>{
+      let la='', lb='';
+      if(r.better){
+        const va=r.better(a), vb=r.better(b);
+        if(va!==vb){ const awin = r.hi==='max' ? va>vb : va<vb; la = awin?'win':''; lb = awin?'':'win'; }
+      }
+      return `<div class="cmp-row"><div class="v left ${la}">${r.f(a)}</div><div class="k">${r.k}</div><div class="v right ${lb}">${r.f(b)}</div></div>`;
+    }).join('');
+    window.switchCar && window.switchCar(selA.value);
+  };
+  selA.addEventListener('change', render);
+  selB.addEventListener('change', render);
+  render();
+})();
+
+/* ---- Simulateur de financement ---- */
+(function(){
+  const model = document.getElementById('fin-model');
+  if(!model) return;
+  const prix = document.getElementById('fin-prix'), apport = document.getElementById('fin-apport'),
+        duree = document.getElementById('fin-duree'), taux = document.getElementById('fin-taux');
+  model.innerHTML = Object.keys(MODELS).map(k=>`<option value="${k}">${MODELS[k].nom}</option>`).join('');
+  const calc = ()=>{
+    const P = Math.max(0, +prix.value - +apport.value);
+    const n = +duree.value, r = (+taux.value/100)/12;
+    const m = r === 0 ? P/n : P * r / (1 - Math.pow(1+r, -n));
+    document.getElementById('fin-prix-val').textContent = euro(+prix.value);
+    document.getElementById('fin-apport-val').textContent = euro(+apport.value);
+    document.getElementById('fin-duree-val').textContent = n + ' mois';
+    document.getElementById('fin-taux-val').textContent = (+taux.value).toFixed(1).replace('.', ',') + ' %';
+    document.getElementById('fin-mensualite').textContent = P > 0 ? Math.round(m).toLocaleString('fr-FR') + ' €' : '0 €';
+    document.getElementById('fin-finance').textContent = euro(P);
+    document.getElementById('fin-cout').textContent = euro(Math.max(0, Math.round(m*n - P)));
+    document.getElementById('fin-total').textContent = euro(Math.round(m*n) + +apport.value);
+  };
+  const syncModel = ()=>{
+    const p = MODELS[model.value].prix;
+    prix.value = p; apport.max = Math.round(p*0.6); if(+apport.value > +apport.max) apport.value = apport.max;
+    calc();
+    window.switchCar && window.switchCar(model.value);
+  };
+  model.addEventListener('change', syncModel);
+  [prix,apport,duree,taux].forEach(el=>el.addEventListener('input', calc));
+  syncModel();
+})();
+
+/* ---- Prise de rendez-vous ---- */
+(function(){
+  const daysEl = document.getElementById('rdv-days'), slotsEl = document.getElementById('rdv-slots');
+  if(!daysEl) return;
+  const jours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const mois = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+  const today = new Date();
+  let selDay = null, selSlot = null;
+  // 6 prochains jours ouvrés (hors dimanche)
+  const dates = []; let d = new Date(today);
+  while(dates.length < 6){ d.setDate(d.getDate()+1); if(d.getDay() !== 0) dates.push(new Date(d)); }
+  daysEl.innerHTML = dates.map((dt,i)=>`<div class="day" data-i="${i}"><span>${jours[dt.getDay()]}</span><b>${dt.getDate()}</b><span>${mois[dt.getMonth()]}</span></div>`).join('');
+  const allSlots = ['09:30','11:00','14:00','15:30','17:00','18:30'];
+  function renderSlots(){
+    // quelques créneaux "déjà pris" de façon déterministe pour l'exemple
+    slotsEl.innerHTML = allSlots.map((s,i)=>{
+      const taken = ((selDay*7 + i) % 5) === 0;
+      return `<div class="slot ${taken?'taken':''}" data-s="${s}">${s}</div>`;
+    }).join('');
+    slotsEl.querySelectorAll('.slot:not(.taken)').forEach(el=>{
+      el.onclick = ()=>{ slotsEl.querySelectorAll('.slot').forEach(x=>x.classList.remove('sel')); el.classList.add('sel'); selSlot = el.dataset.s; };
+    });
+    selSlot = null;
+  }
+  daysEl.querySelectorAll('.day').forEach(el=>{
+    el.onclick = ()=>{ daysEl.querySelectorAll('.day').forEach(x=>x.classList.remove('sel')); el.classList.add('sel'); selDay = +el.dataset.i; renderSlots(); };
+  });
+  daysEl.querySelector('.day').click();
+  window.submitRdv = function(e){
+    e.preventDefault();
+    const form = e.target;
+    if(selDay === null || !selSlot){ alert('Choisissez une date et un créneau.'); return false; }
+    const dt = dates[selDay];
+    form.innerHTML = `<p class="lead" style="margin-top:2rem">Rendez-vous confirmé pour un essai le <b style="color:var(--blanc)">${jours[dt.getDay()]} ${dt.getDate()} ${mois[dt.getMonth()]} à ${selSlot}</b>.<br>Un conseiller vous rappelle sous 48 h pour finaliser.</p>`;
+    return false;
+  };
+})();
 </script>
 </body>
 </html>
