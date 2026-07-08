@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OBSIDIENNE — Concession Automobile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;900&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   OBSIDIENNE — système de design
+   Règles : gris / noir / blanc + touches de rouge (lumières)
+   ============================================================ */
+:root{
+  --noir:#070708;
+  --noir-2:#0d0d0f;
+  --noir-3:#141416;
+  --gris-ligne:#232326;
+  --gris:#8a8a90;
+  --gris-clair:#c9c9ce;
+  --blanc:#f2f2f4;
+  --rouge:#e10600;
+  --rouge-glow:rgba(225,6,0,.55);
+  --display:'Archivo',sans-serif;
+  --mono:'Space Grotesk',monospace;
+  --car-h:min(30vh, 300px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--noir);
+  color:var(--gris-clair);
+  font-family:var(--mono);
+  font-weight:300;
+  overflow-x:hidden;
+  min-height:100vh;
+}
+::selection{background:var(--rouge);color:var(--blanc)}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+/* ============================================================
+   1. ÉCRAN D'INTRO  — l'image fournie
+   Plus tard : remplacé par la séquence de frames Google Flow
+   (voir FrameSequence en bas du script)
+   ============================================================ */
+#intro{
+  position:fixed;inset:0;z-index:100;
+  background:#000;
+  display:flex;align-items:flex-end;justify-content:center;
+  transition:opacity 1.4s ease, transform 2.2s cubic-bezier(.7,0,.3,1);
+}
+#intro.zooming{transform:scale(6);opacity:0;pointer-events:none}
+#intro .enter{
+  margin-bottom:9vh;
+  background:transparent;border:1px solid rgba(242,242,244,.35);
+  color:var(--blanc);letter-spacing:.5em;text-indent:.5em;
+  font-size:.75rem;padding:1.1rem 2.6rem;
+  transition:border-color .4s, box-shadow .4s, letter-spacing .4s;
+  animation:pulse 3s ease-in-out infinite;
+}
+#intro .enter:hover{
+  border-color:var(--rouge);
+  box-shadow:0 0 30px var(--rouge-glow), inset 0 0 12px rgba(225,6,0,.2);
+  letter-spacing:.7em;text-indent:.7em;
+}
+@keyframes pulse{0%,100%{opacity:.75}50%{opacity:1}}
+.intro-ui{position:absolute;bottom:8vh;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:1.1rem;z-index:101}
+#loader{width:220px;height:1px;background:rgba(255,255,255,.15)}
+#loader-bar{height:100%;width:0;background:var(--rouge);box-shadow:0 0 12px var(--rouge-glow);transition:width .25s}
+#intro-hint{font-size:.62rem;letter-spacing:.5em;text-indent:.5em;text-transform:uppercase;color:var(--gris-clair);animation:pulse 3s ease-in-out infinite;text-align:center}
+#skip{position:absolute;top:1.6rem;right:2rem;z-index:102;background:none;border:none;color:var(--gris);font-family:var(--mono);font-size:.62rem;letter-spacing:.3em;text-transform:uppercase;transition:color .3s}
+#skip:hover{color:var(--blanc)}
+#intro.fade{opacity:0;pointer-events:none;transition:opacity .9s ease}
+#intro.clear{background:transparent}
+#scroll-hint{position:fixed;bottom:7vh;left:50%;transform:translateX(-50%);z-index:101;font-size:.62rem;letter-spacing:.5em;text-indent:.5em;text-transform:uppercase;color:var(--gris-clair);animation:pulse 3s ease-in-out infinite;transition:opacity .6s;pointer-events:none}
+#introCanvas{position:fixed;inset:0;z-index:99;display:none;width:100vw;height:100vh;background:#000}
+
+/* ============================================================
+   2. STRUCTURE PRINCIPALE
+   ============================================================ */
+#site{display:none;opacity:0;transition:opacity 1.2s ease .2s}
+#site.visible{display:block}
+#site.on{opacity:1}
+
+header{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.4rem 3rem;
+  background:linear-gradient(to bottom, rgba(7,7,8,.92), rgba(7,7,8,0));
+}
+.logo{font-family:var(--display);font-weight:900;letter-spacing:.35em;font-size:1rem;color:var(--blanc)}
+.logo em{font-style:normal;color:var(--rouge)}
+nav{display:flex;gap:2.2rem}
+nav button{
+  background:none;border:none;color:var(--gris);
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.25em;text-transform:uppercase;
+  padding:.4rem 0;position:relative;transition:color .3s;
+}
+nav button::after{
+  content:"";position:absolute;left:0;bottom:0;height:1px;width:0;
+  background:var(--rouge);box-shadow:0 0 8px var(--rouge-glow);
+  transition:width .35s ease;
+}
+nav button:hover{color:var(--blanc)}
+nav button.active{color:var(--blanc)}
+nav button.active::after{width:100%}
+
+/* ============================================================
+   3. LA VOITURE — toujours présente, centre supérieur
+   Silhouette SVG + balayage lumineux + halo rouge
+   ============================================================ */
+#car-stage{
+  position:sticky;top:0;z-index:40;
+  height:calc(var(--car-h) + 110px);
+  padding-top:88px;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 90% at 50% 15%, rgba(35,35,40,.55), transparent 65%),
+    linear-gradient(to bottom, var(--noir) 55%, rgba(7,7,8,.0));
+}
+#car-stage svg{height:var(--car-h);width:auto;max-width:92vw;overflow:visible}
+#car3d-wrap{height:var(--car-h);width:min(900px,92vw);display:flex;align-items:flex-end;justify-content:center;pointer-events:auto}
+#car3d{width:100%;height:100%;display:block}
+.car-model{transition:opacity .6s ease}
+.car-model.hidden{opacity:0;position:absolute}
+#car-label{
+  font-size:.62rem;letter-spacing:.55em;text-indent:.55em;color:var(--gris);
+  text-transform:uppercase;margin-top:.4rem;transition:opacity .4s;
+}
+/* faisceau lumineux qui balaie la carrosserie */
+.sweep{animation:sweep 4.5s cubic-bezier(.6,.1,.4,.9) infinite}
+@keyframes sweep{
+  0%{transform:translateX(-420px) skewX(-18deg)}
+  55%,100%{transform:translateX(1180px) skewX(-18deg)}
+}
+.glow-red{animation:breathe 3.2s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.35}50%{opacity:.85}}
+@media (prefers-reduced-motion: reduce){
+  .sweep,.glow-red,#intro .enter{animation:none}
+  #intro{transition:opacity .5s}
+}
+
+/* ============================================================
+   4. PAGES
+   ============================================================ */
+main{position:relative;z-index:10;max-width:1180px;margin:0 auto;padding:2.5rem 3rem 6rem}
+.page{display:none;animation:rise .7s ease both}
+.page.active{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+
+.eyebrow{
+  font-size:.62rem;letter-spacing:.5em;text-transform:uppercase;color:var(--rouge);
+  display:flex;align-items:center;gap:1rem;margin-bottom:1.1rem;
+}
+.eyebrow::before{content:"";width:34px;height:1px;background:var(--rouge);box-shadow:0 0 8px var(--rouge-glow)}
+h1{
+  font-family:var(--display);font-weight:900;color:var(--blanc);
+  font-size:clamp(2.2rem,5.5vw,4.2rem);line-height:.98;letter-spacing:-.01em;
+  text-transform:uppercase;margin-bottom:1.4rem;
+}
+h1 .thin{font-weight:400;color:var(--gris)}
+.lead{max-width:52ch;color:var(--gris);font-size:.95rem;line-height:1.75}
+
+.stats{display:flex;gap:0;margin:3rem 0;border-top:1px solid var(--gris-ligne);border-bottom:1px solid var(--gris-ligne)}
+.stat{flex:1;padding:1.6rem 1.4rem;border-left:1px solid var(--gris-ligne)}
+.stat:first-child{border-left:none}
+.stat b{display:block;font-family:var(--display);font-weight:700;font-size:1.9rem;color:var(--blanc)}
+.stat span{font-size:.62rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gris)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.2rem;margin-top:2.5rem}
+.card{
+  background:var(--noir-2);border:1px solid var(--gris-ligne);
+  padding:1.8rem;position:relative;overflow:hidden;
+  transition:border-color .35s, transform .35s;
+}
+.card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--rouge),transparent);
+  opacity:0;transition:opacity .4s;
+}
+.card:hover{border-color:#3a3a3f;transform:translateY(-4px)}
+.card:hover::before{opacity:1}
+.card .tag{font-size:.58rem;letter-spacing:.35em;text-transform:uppercase;color:var(--rouge)}
+.card h3{font-family:var(--display);font-weight:700;color:var(--blanc);font-size:1.25rem;margin:.5rem 0 .9rem;text-transform:uppercase;letter-spacing:.04em}
+.card p{font-size:.8rem;color:var(--gris);line-height:1.7}
+.card .specs{display:flex;gap:1.4rem;margin-top:1.3rem;padding-top:1.1rem;border-top:1px solid var(--gris-ligne)}
+.card .specs div b{display:block;color:var(--gris-clair);font-size:.95rem;font-weight:500}
+.card .specs div span{font-size:.56rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gris)}
+.card .prix{margin-top:1.2rem;font-family:var(--display);font-weight:700;color:var(--blanc);font-size:1.05rem}
+.card .prix small{color:var(--gris);font-family:var(--mono);font-weight:300;font-size:.65rem;letter-spacing:.15em}
+
+.btn{
+  display:inline-block;background:none;border:1px solid var(--gris-ligne);color:var(--blanc);
+  font-size:.68rem;letter-spacing:.4em;text-indent:.4em;text-transform:uppercase;
+  padding:1rem 2.2rem;margin-top:2.2rem;transition:all .35s;
+}
+.btn:hover{border-color:var(--rouge);box-shadow:0 0 24px var(--rouge-glow)}
+.btn.plein{background:var(--rouge);border-color:var(--rouge);color:var(--blanc)}
+.btn.plein:hover{box-shadow:0 0 34px var(--rouge-glow)}
+
+/* services */
+.services-list{margin-top:2.5rem;border-top:1px solid var(--gris-ligne)}
+.service{
+  display:grid;grid-template-columns:110px 1fr auto;gap:2rem;align-items:center;
+  padding:2rem 0;border-bottom:1px solid var(--gris-ligne);transition:padding-left .3s;
+}
+.service:hover{padding-left:1rem}
+.service .code{font-family:var(--display);font-weight:900;font-size:1.6rem;color:var(--gris-ligne);transition:color .3s}
+.service:hover .code{color:var(--rouge)}
+.service h3{font-family:var(--display);color:var(--blanc);text-transform:uppercase;font-size:1rem;letter-spacing:.06em;margin-bottom:.4rem}
+.service p{font-size:.8rem;color:var(--gris);max-width:56ch;line-height:1.7}
+.service .fleche{color:var(--gris);font-size:1.2rem}
+
+/* contact */
+.contact-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:3rem;margin-top:2.5rem}
+form label{display:block;font-size:.6rem;letter-spacing:.35em;text-transform:uppercase;color:var(--gris);margin:1.4rem 0 .5rem}
+form input,form select,form textarea{
+  width:100%;background:var(--noir-2);border:1px solid var(--gris-ligne);
+  color:var(--blanc);font-family:var(--mono);font-size:.85rem;padding:.9rem 1rem;
+  transition:border-color .3s;
+}
+form input:focus,form select:focus,form textarea:focus{outline:none;border-color:var(--rouge);box-shadow:0 0 16px rgba(225,6,0,.18)}
+.infos{border-left:1px solid var(--gris-ligne);padding-left:2.5rem}
+.infos h4{font-size:.6rem;letter-spacing:.4em;text-transform:uppercase;color:var(--rouge);margin:1.8rem 0 .6rem}
+.infos h4:first-child{margin-top:0}
+.infos p{font-size:.85rem;color:var(--gris-clair);line-height:1.8}
+
+footer{
+  border-top:1px solid var(--gris-ligne);margin-top:4rem;padding:2.5rem 3rem;
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:.62rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gris);
+}
+footer .dot{color:var(--rouge)}
+
+@media(max-width:820px){
+  header{padding:1.1rem 1.4rem}
+  nav{gap:1.1rem}
+  nav button{font-size:.6rem;letter-spacing:.15em}
+  main{padding:2rem 1.4rem 4rem}
+  .stats{flex-wrap:wrap}
+  .stat{min-width:45%}
+  .contact-grid{grid-template-columns:1fr}
+  .infos{border-left:none;padding-left:0;border-top:1px solid var(--gris-ligne);padding-top:2rem}
+  .service{grid-template-columns:60px 1fr;gap:1.2rem}
+  .service .fleche{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     ÉCRAN 1 : l'image fournie.
+     Quand tu m'enverras le zip des frames Google Flow,
+     le bouton sera remplacé par la lecture de la séquence
+     (canvas #introCanvas + classe FrameSequence plus bas).
+     ══════════════════════════════════════════════════════════ -->
+<div id="intro">
+  <button id="skip" onclick="skipIntro()">Passer l'intro &rarr;</button>
+  <div class="intro-ui">
+    <div id="loader"><div id="loader-bar"></div></div>
+    <div id="intro-hint">Chargement <span id="pct">0</span> %</div>
+    <button id="start-engine" class="enter" style="display:none">D&eacute;marrer le moteur</button>
+  </div>
+</div>
+<audio id="engine-sound" src="sound/engine.mp3" preload="auto"></audio>
+<canvas id="introCanvas"></canvas>
+
+<div id="site">
+  <header>
+    <div class="logo">OBSIDIENNE<em>.</em></div>
+    <nav id="nav">
+      <button data-page="accueil" data-car="amg" data-label="Mercedes-AMG GT4 — faites-la tourner" class="active">Accueil</button>
+      <button data-page="modeles" data-car="amg" data-label="Gamme — cliquez un modèle pour le voir">Modèles</button>
+      <button data-page="occasions" data-car="cclasse" data-label="Mercedes C-Coupé PD65CC — occasions">Occasions</button>
+      <button data-page="services" data-car="m4" data-label="BMW M4 CSL — atelier & services">Services</button>
+      <button data-page="contact" data-car="p911" data-label="Porsche 911 — essai sur rendez-vous">Contact</button>
+    </nav>
+  </header>
+
+  <!-- ══════════ LA VOITURE — toujours visible, centre supérieur ══════════ -->
+  <div id="car-stage">
+    <div id="car3d-wrap"><canvas id="car3d"></canvas></div>
+    <svg id="car-svg-fallback" style="display:none" viewBox="0 0 960 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <!-- reflet supérieur permanent -->
+        <linearGradient id="topLight" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#5a5a62" stop-opacity=".9"/>
+          <stop offset=".35" stop-color="#2a2a2f" stop-opacity=".5"/>
+          <stop offset="1" stop-color="#0a0a0c"/>
+        </linearGradient>
+        <!-- bande de lumière qui balaie -->
+        <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+          <stop offset=".5" stop-color="#fff" stop-opacity=".55"/>
+          <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+        </linearGradient>
+        <radialGradient id="under" cx=".5" cy=".5" r=".5">
+          <stop offset="0" stop-color="#e10600" stop-opacity=".5"/>
+          <stop offset="1" stop-color="#e10600" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="blurS"><feGaussianBlur stdDeviation="6"/></filter>
+
+        <!-- silhouettes -->
+        <path id="bodyCoupe" d="M85,232 C72,226 68,212 76,198 C82,186 96,172 130,160 C170,120 236,92 320,84 C372,48 470,40 552,56 C618,69 668,100 716,138 C778,150 830,166 858,190 C872,202 874,216 862,226 C842,236 806,238 770,238 L742,238 A62,62 0 0 0 618,238 L330,238 A62,62 0 0 0 206,238 L120,238 C104,238 92,236 85,232 Z"/>
+        <path id="bodySuv" d="M92,236 C76,228 72,204 80,178 C86,158 100,140 134,128 C160,96 220,76 306,72 C346,50 452,46 540,58 C616,68 664,92 712,120 C776,132 830,152 856,180 C872,196 874,216 860,228 C840,240 804,242 768,242 L738,242 A64,64 0 0 0 610,242 L336,242 A64,64 0 0 0 208,242 L126,242 C110,242 100,240 92,236 Z"/>
+        <clipPath id="clipCoupe"><use href="#bodyCoupe"/></clipPath>
+        <clipPath id="clipSuv"><use href="#bodySuv"/></clipPath>
+      </defs>
+
+      <!-- halo rouge sous la voiture -->
+      <ellipse class="glow-red" cx="480" cy="292" rx="330" ry="26" fill="url(#under)"/>
+
+      <!-- ═══ COUPÉ ═══ -->
+      <g id="car-coupe" class="car-model">
+        <use href="#bodyCoupe" fill="url(#topLight)" stroke="#3c3c42" stroke-width="1.5"/>
+        <!-- vitrage -->
+        <path d="M336,92 C384,60 470,54 542,66 C580,74 606,88 626,104 C560,94 470,90 402,96 C374,99 352,104 336,110 Z" fill="#0b0b0d" stroke="#2c2c31" stroke-width="1"/>
+        <!-- balayage lumineux -->
+        <g clip-path="url(#clipCoupe)">
+          <rect class="sweep" x="0" y="20" width="150" height="280" fill="url(#beam)" opacity=".7"/>
+        </g>
+        <!-- feux : rouge à l'arrière, blanc-rouge à l'avant -->
+        <path d="M80,206 L104,200 L104,212 L82,216 Z" fill="#e10600" filter="url(#blurS)" opacity=".9"/>
+        <path d="M846,196 L862,206 L858,216 L840,208 Z" fill="#fff" opacity=".85"/>
+        <circle cx="858" cy="211" r="7" fill="#e10600" filter="url(#blurS)" class="glow-red"/>
+        <!-- roues -->
+        <g fill="#0a0a0c" stroke="#38383e" stroke-width="2">
+          <circle cx="268" cy="238" r="52"/><circle cx="680" cy="238" r="52"/>
+        </g>
+        <g fill="none" stroke="#55555c" stroke-width="1.5">
+          <circle cx="268" cy="238" r="30"/><circle cx="680" cy="238" r="30"/>
+        </g>
+        <circle cx="268" cy="238" r="6" fill="#e10600" opacity=".8"/>
+        <circle cx="680" cy="238" r="6" fill="#e10600" opacity=".8"/>
+      </g>
+
+      <!-- ═══ SUV ═══ -->
+      <g id="car-suv" class="car-model hidden">
+        <use href="#bodySuv" fill="url(#topLight)" stroke="#3c3c42" stroke-width="1.5"/>
+        <path d="M322,80 C368,58 462,54 534,64 C580,72 614,88 640,106 C566,96 470,94 396,100 C364,103 340,108 322,114 Z" fill="#0b0b0d" stroke="#2c2c31" stroke-width="1"/>
+        <g clip-path="url(#clipSuv)">
+          <rect class="sweep" x="0" y="10" width="150" height="300" fill="url(#beam)" opacity=".7"/>
+        </g>
+        <path d="M84,196 L110,190 L110,204 L86,208 Z" fill="#e10600" filter="url(#blurS)" opacity=".9"/>
+        <path d="M842,184 L860,196 L856,208 L836,198 Z" fill="#fff" opacity=".85"/>
+        <circle cx="856" cy="202" r="7" fill="#e10600" filter="url(#blurS)" class="glow-red"/>
+        <g fill="#0a0a0c" stroke="#38383e" stroke-width="2">
+          <circle cx="272" cy="242" r="56"/><circle cx="674" cy="242" r="56"/>
+        </g>
+        <g fill="none" stroke="#55555c" stroke-width="1.5">
+          <circle cx="272" cy="242" r="33"/><circle cx="674" cy="242" r="33"/>
+        </g>
+        <circle cx="272" cy="242" r="6" fill="#e10600" opacity=".8"/>
+        <circle cx="674" cy="242" r="6" fill="#e10600" opacity=".8"/>
+      </g>
+    </svg>
+    <div id="car-label">Chargement du modèle…</div>
+  </div>
+
+  <main>
+    <!-- ══════════ ACCUEIL ══════════ -->
+    <section class="page active" id="page-accueil">
+      <div class="eyebrow">Concession — Casablanca</div>
+      <h1>La nuit<br><span class="thin">a une carrosserie.</span></h1>
+      <p class="lead">Obsidienne sélectionne des machines d'exception, neuves et certifiées. Chaque véhicule est préparé dans nos ateliers, contrôlé sur 180 points, livré avec sa lumière.</p>
+      <div class="stats">
+        <div class="stat"><b>120+</b><span>véhicules en stock</span></div>
+        <div class="stat"><b>180</b><span>points de contrôle</span></div>
+        <div class="stat"><b>24 mois</b><span>de garantie minimum</span></div>
+        <div class="stat"><b>48 h</b><span>pour un essai</span></div>
+      </div>
+      <div class="grid">
+        <div class="card" style="cursor:pointer" onclick="switchCar('amg','Mercedes-AMG GT4')"><span class="tag">Pi&egrave;ce ma&icirc;tresse</span><h3>Mercedes-AMG GT4</h3><p>Le V8 4.0 biturbo dans sa forme la plus radicale. Cliquez pour l'admirer sous la lumi&egrave;re.</p><div class="specs"><div><b>510</b><span>ch</span></div><div><b>3,6 s</b><span>0&ndash;100</span></div><div><b>V8</b><span>biturbo</span></div></div></div>
+        <div class="card" style="cursor:pointer" onclick="switchCar('m4','BMW M4 CSL')"><span class="tag">Best-seller</span><h3>BMW M4 CSL</h3><p>All&eacute;g&eacute;e de 100 kg, six cylindres port&eacute; &agrave; 550 ch. La plus radicale des M4.</p><div class="specs"><div><b>550</b><span>ch</span></div><div><b>3,7 s</b><span>0&ndash;100</span></div><div><b>&minus;100</b><span>kg</span></div></div></div>
+        <div class="card" style="cursor:pointer" onclick="switchCar('p911','Porsche 911 Carrera 4S')"><span class="tag">Aerokit</span><h3>Porsche 911 Carrera 4S</h3><p>Flat-six biturbo, transmission int&eacute;grale, pack a&eacute;rodynamique usine.</p><div class="specs"><div><b>450</b><span>ch</span></div><div><b>3,4 s</b><span>0&ndash;100</span></div><div><b>306</b><span>km/h</span></div></div></div>
+      </div>
+      <button class="btn plein" onclick="goTo('contact')">Réserver un essai</button>
+      <button class="btn" onclick="goTo('modeles')" style="margin-left:1rem">Voir la gamme</button>
+    </section>
+
+    <!-- ══════════ MODÈLES ══════════ -->
+    <section class="page" id="page-modeles">
+      <div class="eyebrow">Gamme neuve</div>
+      <h1>Modèles<span class="thin"> 2026</span></h1>
+      <p class="lead">Coupés, berlines et SUV. Toutes les configurations sont disponibles à la commande, avec livraison en concession.</p>
+      <div class="grid">
+        <div class="card" style="cursor:pointer" onclick="switchCar('amg','Mercedes-AMG GT4')"><span class="tag">Coup&eacute; GT</span><h3>Mercedes-AMG GT4</h3><p>V8 4.0 biturbo, ch&acirc;ssis affut&eacute; circuit, a&eacute;ro carbone. Cliquez pour la voir en 3D.</p><div class="specs"><div><b>510</b><span>ch</span></div><div><b>295</b><span>km/h</span></div></div><div class="prix">199 000 &euro; <small>TTC</small></div></div>
+        <div class="card" style="cursor:pointer" onclick="switchCar('cclasse','Mercedes C-Coupé PD65CC')"><span class="tag">Coup&eacute; pr&eacute;par&eacute;</span><h3>Mercedes C-Coup&eacute; PD65CC</h3><p>Pr&eacute;paration large Prior Design sur base C205 : ailes &eacute;largies, l&egrave;vre avant, diffuseur.</p><div class="specs"><div><b>510</b><span>ch</span></div><div><b>3,9 s</b><span>0&ndash;100</span></div></div><div class="prix">96 500 &euro; <small>TTC</small></div></div>
+        <div class="card" style="cursor:pointer" onclick="switchCar('m4','BMW M4 CSL')"><span class="tag">Coup&eacute;</span><h3>BMW M4 CSL</h3><p>S&eacute;rie limit&eacute;e : 550 ch, 100 kg de moins, si&egrave;ges baquets carbone.</p><div class="specs"><div><b>550</b><span>ch</span></div><div><b>3,7 s</b><span>0&ndash;100</span></div></div><div class="prix">165 000 &euro; <small>TTC</small></div></div>
+        <div class="card" style="cursor:pointer" onclick="switchCar('p911','Porsche 911 Carrera 4S')"><span class="tag">Coup&eacute;</span><h3>Porsche 911 Carrera 4S</h3><p>Flat-six 3.0 biturbo, int&eacute;grale, pack Aerokit usine et pack Chrono.</p><div class="specs"><div><b>450</b><span>ch</span></div><div><b>3,4 s</b><span>0&ndash;100</span></div></div><div class="prix">139 800 &euro; <small>TTC</small></div></div>
+      </div>
+      <button class="btn plein" onclick="goTo('contact')">Configurer & essayer</button>
+    </section>
+
+    <!-- ══════════ OCCASIONS ══════════ -->
+    <section class="page" id="page-occasions">
+      <div class="eyebrow">Occasions certifiées</div>
+      <h1>Seconde vie,<br><span class="thin">même lumière.</span></h1>
+      <p class="lead">Chaque occasion passe 180 points de contrôle en atelier, repart avec 24 mois de garantie et un historique d'entretien complet.</p>
+      <div class="grid">
+        <div class="card" style="cursor:pointer" onclick="switchCar('amg','Mercedes-AMG GT4 — 2023')"><span class="tag">2023 · 21 400 km</span><h3>Mercedes-AMG GT</h3><p>Noir obsidienne, intérieur rouge braise, première main, carnet complet.</p><div class="prix">124 900 € <small>garantie 24 mois</small></div></div>
+        <div class="card" style="cursor:pointer" onclick="switchCar('cclasse','Mercedes C-Coupé PD65CC — 2022')"><span class="tag">2022 · 38 200 km</span><h3>Mercedes C-Coupé PD65CC</h3><p>Gris tungstène, préparation Prior Design complète, historique atelier.</p><div class="prix">61 500 € <small>garantie 24 mois</small></div></div>
+        <div class="card" style="cursor:pointer" onclick="switchCar('m4','BMW M4 CSL — 2024')"><span class="tag">2024 · 9 800 km</span><h3>BMW M4 CSL</h3><p>Frozen Brooklyn Grey, céramiques, sous garantie constructeur.</p><div class="prix">148 900 € <small>garantie 24 mois</small></div></div>
+        <div class="card" style="cursor:pointer" onclick="switchCar('p911','Porsche 911 Carrera 4S — 2021')"><span class="tag">2021 · 54 000 km</span><h3>Porsche 911 Carrera 4S</h3><p>Gris graphite mat, échappement sport, révision majeure effectuée.</p><div class="prix">109 800 € <small>garantie 24 mois</small></div></div>
+      </div>
+      <button class="btn" onclick="goTo('contact')">Demander la liste complète</button>
+    </section>
+
+    <!-- ══════════ SERVICES ══════════ -->
+    <section class="page" id="page-services">
+      <div class="eyebrow">Atelier & accompagnement</div>
+      <h1>Services</h1>
+      <p class="lead">De la première visite à la revente, la concession s'occupe de tout.</p>
+      <div class="services-list">
+        <div class="service"><div class="code">AT</div><div><h3>Atelier & entretien</h3><p>Techniciens certifiés constructeur, pièces d'origine, véhicule de courtoisie pendant chaque intervention.</p></div><div class="fleche">→</div></div>
+        <div class="service"><div class="code">FI</div><div><h3>Financement</h3><p>LOA, LLD ou crédit classique. Simulation en concession en moins de vingt minutes, réponse sous 48 h.</p></div><div class="fleche">→</div></div>
+        <div class="service"><div class="code">RE</div><div><h3>Reprise</h3><p>Estimation de votre véhicule actuel sur place, offre ferme valable 14 jours, déduction immédiate sur votre achat.</p></div><div class="fleche">→</div></div>
+        <div class="service"><div class="code">GA</div><div><h3>Garantie & extension</h3><p>24 mois inclus sur toutes les occasions certifiées, extensions jusqu'à 5 ans, assistance 24 h/24 en Europe.</p></div><div class="fleche">→</div></div>
+        <div class="service"><div class="code">LI</div><div><h3>Livraison lumière</h3><p>Remise des clés dans notre salle de livraison : votre voiture dévoilée sous un seul faisceau, comme sur ce site.</p></div><div class="fleche">→</div></div>
+      </div>
+    </section>
+
+    <!-- ══════════ CONTACT ══════════ -->
+    <section class="page" id="page-contact">
+      <div class="eyebrow">Essai & contact</div>
+      <h1>Prenez<br><span class="thin">le volant.</span></h1>
+      <div class="contact-grid">
+        <form onsubmit="event.preventDefault(); this.innerHTML='<p class=lead style=margin-top:2rem>Demande envoyée. Un conseiller vous rappelle sous 48 h.</p>'">
+          <label>Nom complet</label>
+          <input type="text" required placeholder="Votre nom">
+          <label>Téléphone</label>
+          <input type="tel" required placeholder="+212 6 00 00 00 00">
+          <label>Modèle souhaité</label>
+          <select><option>Mercedes-AMG GT4</option><option>Mercedes C-Coupé PD65CC</option><option>BMW M4 CSL</option><option>Porsche 911 Carrera 4S</option><option>Occasion — à préciser</option></select>
+          <label>Message</label>
+          <textarea rows="4" placeholder="Créneau souhaité, questions…"></textarea>
+          <button class="btn plein" type="submit">Envoyer la demande</button>
+        </form>
+        <div class="infos">
+          <h4>Showroom</h4>
+          <p>Boulevard de la Corniche<br>Casablanca, Maroc</p>
+          <h4>Horaires</h4>
+          <p>Lun – Sam : 9 h – 19 h<br>Nocturne jeudi : jusqu'à 22 h</p>
+          <h4>Téléphone</h4>
+          <p>+212 5 22 00 00 00</p>
+          <h4>Essais</h4>
+          <p>Sur rendez-vous, sous 48 h.<br>Permis de plus de 2 ans requis.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>OBSIDIENNE<span class="dot"> ●</span> Concession automobile</div>
+    <div>Modèles 3D via Sketchfab — crédits artistes à compléter · © 2026</div>
+  </footer>
+</div>
+
+<script src="three.min.js"></script>
+<script src="GLTFLoader.js"></script>
+<script src="DRACOLoader.js"></script>
+<script>
+/* ============================================================
+   NAVIGATION — la voiture reste, la page change
+   ============================================================ */
+const nav = document.getElementById('nav');
+const label = document.getElementById('car-label');
+
+function goTo(name){
+  const btn = nav.querySelector(`[data-page="${name}"]`);
+  if(btn) btn.click();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+nav.addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  nav.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b===btn));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+btn.dataset.page).classList.add('active');
+
+  // la voiture change de modèle 3D selon la page — mais reste toujours là
+  switchCar(btn.dataset.car, btn.dataset.label);
+  window.scrollTo({top:0, behavior:'smooth'});
+});
+
+
+/* ============================================================
+   GARAGE 3D — vrais modèles (.glb compressés Draco)
+   Mercedes-AMG GT4 · Mercedes C-Coupé PD65CC · BMW M4 CSL ·
+   Porsche 911 Carrera 4S.
+   Rotation à la souris (drag), balayage lumineux, halo rouge.
+   ============================================================ */
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let switchCar = ()=>{};
+
+(function initGarage(){
+  const canvas = document.getElementById('car3d');
+  let renderer;
+  try{
+    renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
+  }catch(e){
+    document.getElementById('car3d-wrap').style.display='none';
+    document.getElementById('car-svg-fallback').style.display='block';
+    return;
+  }
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 2, .1, 60);
+  camera.position.set(4.7, 1.7, 5.7);
+  camera.lookAt(0, .55, 0);
+
+  /* ─── environnement studio pour les reflets des carrosseries :
+         softbox blanc au plafond, panneaux gris, bandeau rouge ─── */
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const env = new THREE.Scene();
+  const mk = (w,h,color)=> new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshBasicMaterial({color, side:THREE.DoubleSide}));
+  const soft = mk(14, 5, 0xffffff); soft.position.set(0, 7, 0); soft.rotation.x = Math.PI/2; env.add(soft);
+  const s1 = mk(9, 4, 0x2e2e34); s1.position.set(-8, 2, 0); s1.rotation.y = Math.PI/2; env.add(s1);
+  const s2 = mk(9, 4, 0x2e2e34); s2.position.set(8, 2, 0);  s2.rotation.y = -Math.PI/2; env.add(s2);
+  const red = mk(6, 1.2, 0xe10600); red.position.set(0, .6, -8); env.add(red);
+  scene.environment = pmrem.fromScene(env, .04).texture;
+
+  /* ─── éclairage : pénombre + faisceau qui balaie + rouge ─── */
+  scene.add(new THREE.HemisphereLight(0x3a3a44, 0x08080a, .7));
+  const key = new THREE.DirectionalLight(0xffffff, .5);
+  key.position.set(2, 6, 3); scene.add(key);
+  const sweep = new THREE.PointLight(0xffffff, 2.6, 12, 2);
+  sweep.position.set(0, 2.6, 2.6); scene.add(sweep);
+  const under = new THREE.PointLight(0xe10600, 1.0, 3.2, 2);
+  under.position.set(0, .3, 0); scene.add(under);
+
+  /* ─── sol sombre ─── */
+  const ground = new THREE.Mesh(
+    new THREE.CircleGeometry(7, 48),
+    new THREE.MeshStandardMaterial({color:0x0b0b0d, roughness:.55, metalness:.3})
+  );
+  ground.rotation.x = -Math.PI/2; scene.add(ground);
+
+  // nappe rouge sous la voiture (dégradé radial doux)
+  (function(){
+    const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+    const g = cv.getContext('2d');
+    const rg = g.createRadialGradient(128,128,10,128,128,128);
+    rg.addColorStop(0,'rgba(225,6,0,.55)'); rg.addColorStop(1,'rgba(225,6,0,0)');
+    g.fillStyle = rg; g.fillRect(0,0,256,256);
+    const tex = new THREE.CanvasTexture(cv);
+    const disc = new THREE.Mesh(
+      new THREE.PlaneGeometry(6.5, 3.4),
+      new THREE.MeshBasicMaterial({map:tex, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending})
+    );
+    disc.rotation.x = -Math.PI/2; disc.position.y = .01; scene.add(disc);
+  })();
+
+  /* ─── chargement des 4 vrais modèles ─── */
+  const draco = new THREE.DRACOLoader();
+  draco.setDecoderPath('draco/');
+  const loader = new THREE.GLTFLoader();
+  loader.setDRACOLoader(draco);
+
+  const CARS = {
+    amg:    {file:'models/amg.glb'},
+    cclasse:{file:'models/cclasse.glb'},
+    m4:     {file:'models/m4.glb'},
+    p911:   {file:'models/p911.glb'},
+  };
+  const cars = {};
+  let current = 'amg', pending = null, spin = .5;
+
+  function normalize(obj){
+    const grp = new THREE.Group();
+    grp.add(obj);
+    let box = new THREE.Box3().setFromObject(obj);
+    let size = box.getSize(new THREE.Vector3());
+    if(size.x > size.z) obj.rotation.y = Math.PI/2;   // longueur toujours sur Z
+    box = new THREE.Box3().setFromObject(obj);
+    size = box.getSize(new THREE.Vector3());
+    const s = 4.6 / Math.max(size.x, size.z);   // même longueur pour toutes
+    obj.scale.setScalar(s);
+    box = new THREE.Box3().setFromObject(obj);
+    const c = box.getCenter(new THREE.Vector3());
+    obj.position.x -= c.x; obj.position.z -= c.z;
+    obj.position.y -= box.min.y;                 // posée sur le sol
+    obj.traverse(o=>{
+      if(o.isMesh && o.material){
+        (Array.isArray(o.material) ? o.material : [o.material]).forEach(m=>{ m.envMapIntensity = 1.2; });
+      }
+    });
+    return grp;
+  }
+
+  canvas.style.transition = 'opacity .25s ease';
+
+  function reveal(name){
+    for(const k in cars) cars[k].visible = (k === name);
+    current = name; pending = null;
+    cars[name].rotation.y = spin;
+    canvas.style.opacity = 1;
+  }
+
+  for(const [key, def] of Object.entries(CARS)){
+    loader.load(def.file, gltf=>{
+      const car = normalize(gltf.scene);
+      car.visible = false;
+      scene.add(car);
+      cars[key] = car;
+      const want = pending || current;
+      if(key === want) reveal(want);
+    }, undefined, err=> console.error('modèle', key, err));
+  }
+
+  switchCar = function(name, lab){
+    if(!CARS[name]) name = 'amg';
+    if(lab !== undefined){
+      label.style.opacity = 0;
+      setTimeout(()=>{ label.textContent = lab; label.style.opacity = 1; }, 300);
+    }
+    if(name === current && cars[name] && cars[name].visible) return;
+    canvas.style.opacity = 0;
+    if(cars[name]){
+      setTimeout(()=> reveal(name), 260);
+    }else{
+      pending = name;   // révélée dès la fin de son chargement
+    }
+  };
+
+  /* ─── rotation à la souris / au doigt ─── */
+  const wrap = document.getElementById('car3d-wrap');
+  wrap.style.cursor = 'grab';
+  wrap.style.touchAction = 'pan-y';
+  let dragging = false, lastX = 0, vel = 0, lastTouch = -9999;
+  wrap.addEventListener('pointerdown', e=>{
+    dragging = true; lastX = e.clientX; vel = 0;
+    wrap.setPointerCapture(e.pointerId);
+    wrap.style.cursor = 'grabbing';
+    lastTouch = performance.now();
+  });
+  wrap.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    const dx = e.clientX - lastX; lastX = e.clientX;
+    const r = dx * .009;
+    spin += r; vel = r;
+    lastTouch = performance.now();
+  });
+  const endDrag = ()=>{ dragging = false; wrap.style.cursor = 'grab'; };
+  wrap.addEventListener('pointerup', endDrag);
+  wrap.addEventListener('pointercancel', endDrag);
+  wrap.addEventListener('pointerleave', endDrag);
+
+  /* ─── boucle ─── */
+  function resize(){
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if(canvas.width !== Math.floor(w * renderer.getPixelRatio())){
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h; camera.updateProjectionMatrix();
+    }
+  }
+  let t0 = performance.now();
+  function loop(now){
+    const dt = Math.min((now - t0) / 1000, .05); t0 = now;
+    resize();
+    if(!dragging){
+      if(now - lastTouch > 2600){        // reprise de la rotation auto
+        if(!REDUCED) spin += dt * .3;
+      }else{
+        spin += vel; vel *= .93;         // inertie après le lâcher
+      }
+    }
+    if(cars[current] && cars[current].visible) cars[current].rotation.y = spin;
+    if(!REDUCED){
+      sweep.position.x = Math.sin(now * .00048) * 5.6;
+      under.intensity = 1.0 + Math.sin(now * .002) * .45;
+    }
+    renderer.render(scene, camera);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+
+
+/* ============================================================
+   INTRO — séquence de frames Google Flow, jouée au scroll.
+   On "entre" dans la calandre en faisant défiler.
+   Fondu au noir sur les derniers 12 % pour raccorder au site.
+   ============================================================ */
+class FrameSequence{
+  constructor({path, count, ext='jpg', pad=4}){
+    this.canvas = document.getElementById('introCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.frames = []; this.count = count;
+    this.path = path; this.ext = ext; this.pad = pad;
+    this.last = 0; this.done = false;
+  }
+  src(i){ return `${this.path}/frame_${String(i+1).padStart(this.pad,'0')}.${this.ext}`; }
+  async load(onProgress){
+    let loaded = 0;
+    const jobs = Array.from({length:this.count},(_,i)=> new Promise(res=>{
+      const img = new Image();
+      img.onload = ()=>{ this.frames[i]=img; onProgress?.(++loaded/this.count); res(); };
+      img.onerror = ()=>{ onProgress?.(++loaded/this.count); res(); };
+      img.src = this.src(i);
+    }));
+    await Promise.all(jobs);
+  }
+  _blit(x, img, c, alpha){
+    const s = Math.max(c.width/img.width, c.height/img.height);
+    x.globalAlpha = alpha;
+    x.drawImage(img, (c.width-img.width*s)/2, (c.height-img.height*s)/2, img.width*s, img.height*s);
+    x.globalAlpha = 1;
+  }
+  draw(i, dark=0){
+    i = Math.max(0, Math.min(i, this.count-1));
+    const lo = Math.floor(i), hi = Math.min(lo+1, this.count-1), f = i - lo;
+    const a = this.frames[lo], b = this.frames[hi];
+    if(!a && !b) return;
+    const c=this.canvas, x=this.ctx;
+    c.width = innerWidth; c.height = innerHeight;
+    if(a) this._blit(x, a, c, 1);
+    if(b && f > 0.001) this._blit(x, b, c, f);   // fondu vers la frame suivante
+    if(dark > 0){ x.fillStyle = `rgba(0,0,0,${Math.min(dark,1)})`; x.fillRect(0,0,c.width,c.height); }
+    this.last = i;
+  }
+}
+
+const SEQ = new FrameSequence({path:'frames', count:596, ext:'jpg', pad:4});
+const bar = document.getElementById('loader-bar');
+const pct = document.getElementById('pct');
+const hint = document.getElementById('intro-hint');
+
+SEQ.load(p=>{
+  const v = Math.round(p*100);
+  bar.style.width = v + '%';
+  if(pct) pct.textContent = v;
+}).then(()=>{
+  SEQ.canvas.style.display = 'block';
+  SEQ.draw(0);
+  document.getElementById('intro').classList.add('clear');
+  document.getElementById('loader').style.display = 'none';
+  hint.style.display = 'none';
+  const btn = document.getElementById('start-engine');
+  btn.style.display = 'block';
+  btn.onclick = ()=>{
+    const snd = document.getElementById('engine-sound');
+    if(snd){ snd.volume = .85; snd.play().catch(()=>{}); }
+    startJourney();
+  };
+});
+
+let journeyOn = false;
+function startJourney(){
+  if(journeyOn) return; journeyOn = true;
+  const intro = document.getElementById('intro');
+  const canvas = SEQ.canvas;
+  canvas.style.display = 'block';
+  SEQ.draw(0);
+  intro.classList.add('fade');
+  setTimeout(()=> intro.remove(), 1000);
+  const sh = document.createElement('div');
+  sh.id = 'scroll-hint';
+  sh.innerHTML = 'Faites d\u00e9filer pour entrer &darr;';
+  document.body.appendChild(sh);
+  document.body.style.height = (SEQ.count * 8) + 'px';
+  scrollTo(0,0);
+
+  const FADE_START = .90; // fondu au noir sur la fin (dernière frame non noire)
+  let target = 0, cur = 0;
+  const render = ()=>{
+    if(SEQ.done) return;
+    cur += (target - cur) * 0.12;                 // lerp → rattrapage doux
+    if(Math.abs(target - cur) < 0.002) cur = target;
+    const dark = cur > FADE_START ? (cur - FADE_START) / (1 - FADE_START) : 0;
+    SEQ.draw(cur * (SEQ.count - 1), dark);
+    if(target >= 1 && cur > 0.995) finishIntro();
+    requestAnimationFrame(render);
+  };
+  const onScroll = ()=>{
+    if(SEQ.done) return;
+    const max = document.body.scrollHeight - innerHeight;
+    target = Math.min(max > 0 ? scrollY / max : 1, 1);
+    const sh = document.getElementById('scroll-hint');
+    if(sh && scrollY > 60) sh.remove();
+  };
+  addEventListener('scroll', onScroll, {passive:true});
+  addEventListener('resize', ()=>{ if(!SEQ.done) SEQ.draw(cur * (SEQ.count-1)); });
+  SEQ._onScroll = onScroll;
+  requestAnimationFrame(render);                  // boucle continue = fluidité
+}
+
+function finishIntro(){
+  if(SEQ.done) return; SEQ.done = true;
+  const sh = document.getElementById('scroll-hint'); if(sh) sh.remove();
+  removeEventListener('scroll', SEQ._onScroll);
+  document.body.style.height = '';
+  scrollTo(0,0);
+  const site = document.getElementById('site');
+  site.classList.add('visible');
+  requestAnimationFrame(()=> requestAnimationFrame(()=> site.classList.add('on')));
+  const c = SEQ.canvas;
+  c.style.transition = 'opacity 1.1s ease';
+  c.style.opacity = 0;
+  setTimeout(()=> c.remove(), 1200);
+}
+
+function skipIntro(){
+  const intro = document.getElementById('intro');
+  if(intro){ intro.classList.add('fade'); setTimeout(()=> intro.remove(), 900); }
+  if(!journeyOn){ journeyOn = true; }
+  finishIntro();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# éditeurs
+.vscode/
+.idea/
+
+# dépendances (aucune ici, le site est statique)
+node_modules/
+img.b64
+*.zip
