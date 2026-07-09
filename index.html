@@ -143,13 +143,7 @@ nav button.active::after{width:100%}
 #car3d{width:100%;height:100%;display:block}
 .car-model{transition:opacity .6s ease}
 .car-model.hidden{opacity:0;position:absolute}
-#car-label{
-  position:fixed;top:calc(var(--car-h) - 30px);left:0;right:0;z-index:41;
-  text-align:center;pointer-events:none;
-  font-size:.64rem;letter-spacing:.55em;text-indent:.55em;color:var(--gris-clair);
-  text-transform:uppercase;transition:opacity .4s;
-}
-#car-stage.tucked ~ #car-label{opacity:0;pointer-events:none}
+
 /* faisceau lumineux qui balaie la carrosserie */
 .sweep{animation:sweep 4.5s cubic-bezier(.6,.1,.4,.9) infinite}
 @keyframes sweep{
@@ -316,7 +310,7 @@ footer .dot{color:var(--rouge)}
   /* voiture + outils */
   #car-stage{padding-top:64px}
   #car3d-wrap{width:100%}
-  #car-label{font-size:.55rem;letter-spacing:.35em;text-indent:.35em;top:calc(var(--car-h) - 26px)}
+
   #car-tools{top:calc(var(--car-h) - 2px);gap:.4rem}
   #car-tools button{font-size:.52rem;padding:.45rem .7rem}
   #car-stage.tucked{transform:translateX(60vw) scale(.6)}
@@ -467,7 +461,7 @@ footer .dot{color:var(--rouge)}
       </g>
     </svg>
   </div>
-  <div id="car-label">Chargement du modèle…</div>
+
 
 
   <main>
@@ -662,7 +656,7 @@ footer .dot{color:var(--rouge)}
    NAVIGATION — la voiture reste, la page change
    ============================================================ */
 const nav = document.getElementById('nav');
-const label = document.getElementById('car-label');
+
 
 /* ─── comportement scroll : la voiture glisse à droite et disparaît en
        descendant, revient dès qu'on remonte ─── */
@@ -671,6 +665,7 @@ const label = document.getElementById('car-label');
   let lastY = 0, ticking = false;
   function update(){
     const y = window.scrollY;
+    if(y === lastY){ ticking = false; return; }
     const goingDown = y > lastY;
     // au-delà d'un petit seuil de scroll : si on descend → range la voiture ;
     // si on remonte → la ramène. Toujours visible tout en haut.
@@ -701,7 +696,7 @@ nav.addEventListener('click', e=>{
   document.getElementById('page-'+btn.dataset.page).classList.add('active');
 
   // la voiture change de modèle 3D selon la page — mais reste toujours là
-  window.switchCar(btn.dataset.car, btn.dataset.label);
+  window.switchCar(btn.dataset.car);
   window.scrollTo({top:0, behavior:'smooth'});
 });
 
@@ -744,13 +739,7 @@ window.switchCar = function(){};
       if(!CARS[name]) name = 'amg';
       document.getElementById('car-stage').classList.remove('tucked');
       if(window.scrollY > 60) window.scrollTo({top:0, behavior:'smooth'});
-      if(lab !== undefined){
-        const label = document.getElementById('car-label');
-        if (label) {
-          label.style.opacity = 0;
-          setTimeout(()=>{ label.textContent = lab; label.style.opacity = 1; }, 300);
-        }
-      }
+
       const coupe = document.getElementById('car-coupe');
       const suv = document.getElementById('car-suv');
       if (coupe && suv) {
@@ -764,8 +753,7 @@ window.switchCar = function(){};
       }
     };
     
-    const label = document.getElementById('car-label');
-    if (label) label.textContent = "Mercedes-AMG GT4 — Mode dégradé (SVG)";
+
   }
 
   const isLocalFile = window.location.protocol === 'file:';
@@ -887,15 +875,11 @@ window.switchCar = function(){};
     }, undefined, err=> console.error('modèle', key, err));
   }
 
-  window.switchCar = function(name, lab){
+  window.switchCar = function(name){
     if(!CARS[name]) name = 'amg';
     // ramène la grande voiture en haut de page
     document.getElementById('car-stage').classList.remove('tucked');
     if(window.scrollY > 60) window.scrollTo({top:0, behavior:'smooth'});
-    if(lab !== undefined){
-      label.style.opacity = 0;
-      setTimeout(()=>{ label.textContent = lab; label.style.opacity = 1; }, 300);
-    }
     if(name === current && cars[name] && cars[name].visible) return;
     canvas.style.opacity = 0;
     if(cars[name]){
